@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solana Flash Trade Multi-Asset FLP Liquidity Radar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #030712; color: #f9fafb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.4); }
+    .accent-gradient { background: linear-gradient(135deg, #14F195 0%, #F59E0B 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+  <div class="max-w-6xl mx-auto w-full space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-5 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-amber-900/60 text-amber-400 border border-amber-700">SOLANA PERPS</span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-900/60 text-emerald-400 border border-emerald-700">FLASH TRADE FLP</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">Flash Trade FLP Liquidity & Funding Rate Radar</h1>
+        <p class="text-sm text-gray-400">Dynamic rebalancing entry fee discounts, trader borrow interest rates, and FLP real staking APR on Solana.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs text-gray-400">Network / Cluster</div>
+          <div class="text-sm font-bold text-white flex items-center justify-end gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Solana Mainnet-Beta</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Key Metrics Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">FLP Staking APR</div>
+        <div id="statFlpApr" class="text-2xl font-black text-emerald-400 mt-1">30.66%</div>
+        <div class="text-xs text-gray-500 mt-0.5">70% fee distribution</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Dynamic Entry Fee</div>
+        <div id="statDynamicFee" class="text-2xl font-black text-cyan-400 mt-1">5.00 bps</div>
+        <div class="text-xs text-gray-500 mt-0.5">Rebalancing discount (min)</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Daily User Cashflow</div>
+        <div id="statDailyIncome" class="text-2xl font-black text-amber-400 mt-1">$16.80/day</div>
+        <div class="text-xs text-gray-500 mt-0.5">On $20,000 FLP deposit</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Trader Borrow APR</div>
+        <div id="statBorrowApr" class="text-2xl font-black text-purple-400 mt-1">109.50%</div>
+        <div class="text-xs text-gray-500 mt-0.5">At 75% pool utilization</div>
+      </div>
+    </div>
+
+    <!-- Simulator Inputs & Output Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Input Controls -->
+      <div class="glass-card p-5 rounded-xl space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-amber-400"></i> FLP & Pool Parameters
+        </h3>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Your FLP Deposit (USD)</span>
+            <span id="labelDeposit" class="font-bold text-white">$20,000</span>
+          </div>
+          <input type="range" id="inputDeposit" min="2000" max="100000" step="2000" value="20000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Actual Asset Weight in Pool (%)</span>
+            <span id="labelActualWeight" class="font-bold text-cyan-400">37.0%</span>
+          </div>
+          <input type="range" id="inputActualWeight" min="20.0" max="60.0" step="1.0" value="37.0" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Pool 24h Volume ($)</span>
+            <span id="labelVolume" class="font-bold text-amber-400">$10,000,000</span>
+          </div>
+          <input type="range" id="inputVolume" min="1000000" max="25000000" step="1000000" value="10000000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-400">Target Weight (%)</label>
+            <input type="number" id="inputTargetWeight" value="40.0" step="1.0" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400">Pool Util (%)</label>
+            <input type="number" id="inputUtil" value="75.0" step="5.0" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+        </div>
+
+        <button onclick="recalculate()" class="w-full py-2 px-4 rounded-lg bg-amber-600 hover:bg-amber-500 font-semibold text-sm transition">
+          Recalculate Radar
+        </button>
+      </div>
+
+      <!-- Strategy Ledger & Breakdown -->
+      <div class="glass-card p-5 rounded-xl space-y-4 lg:col-span-2">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-coins text-emerald-400"></i> FLP Yield Accounting & Borrow Schedules
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">FLP Staking Cashflow Ledger</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Pool 24h Trading Fees</span>
+              <span id="cellPoolDailyFees" class="font-bold text-white">$6,000.00/day</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">70% FLP Fee Payout Pool</span>
+              <span id="cellFlpDailyPool" class="font-bold text-emerald-400">$4,200.00/day</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Your Pool TVL Share</span>
+              <span id="cellUserShare" class="font-bold text-cyan-400">0.40%</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Annual Staking Cashflow</span>
+              <span id="cellAnnualIncome" class="font-bold text-purple-400">$6,132.00/yr</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Opportunity Status</span>
+              <span id="badgeTier" class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600">PRIME REBALANCE</span>
+            </div>
+          </div>
+
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">Dynamic Fee & Trader Borrow Schedules</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Asset Weight Imbalance</span>
+              <span id="cellDelta" class="font-bold text-cyan-400">-3.00% (Underweight)</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Effective Deposit Fee</span>
+              <span id="cellFeeBps" class="font-bold text-emerald-400">5.00 bps (0.05%)</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Entry Deposit Cost</span>
+              <span id="cellFeeCost" class="font-bold text-white">$10.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Hourly Trader Borrow Rate</span>
+              <span id="cellHourlyBorrow" class="font-bold text-amber-400">1.250 bps/hr</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Trader Daily Borrow Cost</span>
+              <span id="cellDailyBorrow" class="font-bold text-rose-400">$75.00/day ($25k pos)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP License Commercial Module -->
+    <div class="glass-card p-6 rounded-xl border border-amber-500/30">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <span class="px-2.5 py-0.5 text-xs font-bold uppercase rounded-full bg-amber-900/80 text-amber-300 border border-amber-600">COMMERCIAL VIP ACCESS</span>
+          <h2 class="text-xl font-black text-white mt-1">Unlock Automated Flash Trade Sentinel & Rebalance Sniper</h2>
+          <p class="text-sm text-gray-400">Sub-second webhook alerts when FLP pool assets become underweight (triggering 5 bps entry discounts), hourly funding rate spikes, and liquidation snipers.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01', 'Base')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-brands fa-ethereum"></i> Pay 5 Base USDC
+          </button>
+          <button onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM', 'Solana')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-bolt"></i> Pay 0.03 SOL
+          </button>
+        </div>
+      </div>
+      <div id="copyNotice" class="hidden mt-3 p-2 text-xs bg-emerald-950/80 border border-emerald-700 text-emerald-300 rounded"></div>
+    </div>
+  </div>
+
+  <footer class="mt-8 border-t border-gray-800 pt-4 text-center text-xs text-gray-500">
+    <p>Flash Trade FLP Liquidity Radar &copy; 2026. Non-custodial analytics on Solana Mainnet-Beta.</p>
+  </footer>
+
+  <script>
+    function recalculate() {
+      const deposit = parseFloat(document.getElementById('inputDeposit').value);
+      const actualWeight = parseFloat(document.getElementById('inputActualWeight').value);
+      const targetWeight = parseFloat(document.getElementById('inputTargetWeight').value);
+      const volume = parseFloat(document.getElementById('inputVolume').value);
+      const util = parseFloat(document.getElementById('inputUtil').value);
+
+      document.getElementById('labelDeposit').innerText = '$' + deposit.toLocaleString();
+      document.getElementById('labelActualWeight').innerText = actualWeight.toFixed(1) + '%';
+      document.getElementById('labelVolume').innerText = '$' + volume.toLocaleString();
+
+      const delta = actualWeight - targetWeight;
+      let feeBps = 20.0;
+      if (delta <= 0) {
+        feeBps = Math.max(5.0, 20.0 + (delta * 5.0));
+      } else {
+        feeBps = 20.0 + (delta * 5.0);
+      }
+      const feeCost = deposit * (feeBps / 10000.0);
+
+      const poolDailyFees = volume * 0.0006; // 6 bps
+      const flpDailyPool = poolDailyFees * 0.70; // 70% share
+      const userShare = deposit / 5000000.0;
+      const userDailyIncome = flpDailyPool * userShare;
+      const userAnnualIncome = userDailyIncome * 365.0;
+      const flpApr = (userAnnualIncome / deposit) * 100.0;
+
+      const hourlyBorrowBps = 0.5 * (1.0 + (util / 100.0) * 2.0);
+      const hourlyFee = 25000.0 * (hourlyBorrowBps / 10000.0);
+      const dailyBorrowFee = hourlyFee * 24.0;
+      const borrowApr = (dailyBorrowFee * 365.0 / 25000.0) * 100.0;
+
+      document.getElementById('statFlpApr').innerText = flpApr.toFixed(2) + '%';
+      document.getElementById('statDynamicFee').innerText = feeBps.toFixed(2) + ' bps';
+      document.getElementById('statDailyIncome').innerText = '$' + userDailyIncome.toFixed(2) + '/day';
+      document.getElementById('statBorrowApr').innerText = borrowApr.toFixed(2) + '%';
+
+      document.getElementById('cellPoolDailyFees').innerText = '$' + poolDailyFees.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '/day';
+      document.getElementById('cellFlpDailyPool').innerText = '$' + flpDailyPool.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '/day';
+      document.getElementById('cellUserShare').innerText = (userShare * 100.0).toFixed(2) + '%';
+      document.getElementById('cellAnnualIncome').innerText = '$' + userAnnualIncome.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '/yr';
+
+      document.getElementById('cellDelta').innerText = (delta >= 0 ? '+' : '') + delta.toFixed(2) + '% (' + (delta <= 0 ? 'Underweight' : 'Overweight') + ')';
+      document.getElementById('cellFeeBps').innerText = feeBps.toFixed(2) + ' bps (' + (feeBps / 100.0).toFixed(3) + '%)';
+      document.getElementById('cellFeeCost').innerText = '$' + feeCost.toFixed(2);
+      document.getElementById('cellHourlyBorrow').innerText = hourlyBorrowBps.toFixed(3) + ' bps/hr';
+      document.getElementById('cellDailyBorrow').innerText = '$' + dailyBorrowFee.toFixed(2) + '/day ($25k pos)';
+
+      const badge = document.getElementById('badgeTier');
+      if (delta <= 0 && flpApr >= 20.0) {
+        badge.innerText = 'PRIME REBALANCE';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600';
+      } else if (flpApr >= 15.0) {
+        badge.innerText = 'STRONG YIELD';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-amber-900/60 text-amber-300 border border-amber-600';
+      } else {
+        badge.innerText = 'STANDARD MONITOR';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-gray-900/60 text-gray-300 border border-gray-600';
+      }
+    }
+
+    document.getElementById('inputDeposit').addEventListener('input', recalculate);
+    document.getElementById('inputActualWeight').addEventListener('input', recalculate);
+    document.getElementById('inputTargetWeight').addEventListener('input', recalculate);
+    document.getElementById('inputVolume').addEventListener('input', recalculate);
+    document.getElementById('inputUtil').addEventListener('input', recalculate);
+
+    function copyWallet(address, network) {
+      navigator.clipboard.writeText(address);
+      const notice = document.getElementById('copyNotice');
+      notice.innerHTML = '<strong>' + network + ' Address Copied:</strong> ' + address + ' (Send payment and message @SolGuardScanBot with tx hash for instant VIP API key activation)';
+      notice.classList.remove('hidden');
+      setTimeout(() => notice.classList.add('hidden'), 8000);
+    }
+
+    recalculate();
+  </script>
+</body>
+</html>
