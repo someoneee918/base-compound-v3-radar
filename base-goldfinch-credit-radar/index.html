@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Goldfinch / Finterest RWA Private Credit Junior & Senior Tranche Waterfall Radar</title>
+  <style>
+    :root {
+      --bg-dark: #0a0e17;
+      --card-bg: #121927;
+      --border: #1f293d;
+      --accent-gold: #f59e0b;
+      --accent-glow: rgba(245, 158, 11, 0.2);
+      --accent-blue: #3b82f6;
+      --success: #10b981;
+      --danger: #ef4444;
+      --text-main: #f9fafb;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; padding: 24px 16px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+    .badge { display: inline-block; background: var(--accent-glow); color: var(--accent-gold); border: 1px solid var(--accent-gold); padding: 4px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; }
+    h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+    p.lead { color: var(--text-muted); font-size: 1.05rem; max-width: 780px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 32px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; position: relative; }
+    .card h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+    .metric-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); }
+    .metric-label { color: var(--text-muted); font-size: 0.9rem; }
+    .metric-value { font-weight: 700; font-size: 1.05rem; font-family: monospace; }
+    .val-gold { color: var(--accent-gold); }
+    .val-blue { color: #60a5fa; }
+    .val-success { color: var(--success); }
+    .val-danger { color: var(--danger); }
+    .slider-group { margin-bottom: 16px; }
+    .slider-group label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+    input[type=range] { width: 100%; accent-color: var(--accent-gold); background: #1e293b; height: 6px; border-radius: 4px; }
+    .vip-box { background: linear-gradient(145deg, #181d2a, #0d121c); border: 1px solid var(--accent-gold); border-radius: 12px; padding: 24px; text-align: center; margin-top: 24px; }
+    .vip-box h3 { font-size: 1.3rem; margin-bottom: 10px; color: var(--accent-gold); }
+    .wallet-addr { background: #080c14; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; border: 1px solid #1f2937; word-break: break-all; margin: 8px 0; display: inline-block; }
+    button.btn { background: var(--accent-gold); color: #0a0e17; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 12px; }
+    button.btn:hover { background: #d97706; color: white; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Base L2 • Goldfinch Protocol • RWA Private Credit</div>
+      <h1>RWA Private Credit Junior & Senior Tranche Waterfall Radar</h1>
+      <p class="lead">Quantitative simulation and risk management engine for Goldfinch Protocol RWA borrower pools, first-loss Junior tranche risk-reallocation premiums, Senior tranche capital protection, and secondary loan token discounts on Base.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Card 1: Tranche Waterfall Yields -->
+      <div class="card">
+        <h2>Tranche Waterfall Yields <span class="badge" style="margin:0;">Risk-Adjusted</span></h2>
+        <div class="slider-group">
+          <label><span>Borrower Principal Pool ($)</span><span id="prinVal">$1,000,000</span></label>
+          <input type="range" id="prinInput" min="200000" max="5000000" step="100000" value="1000000" oninput="recalc()">
+        </div>
+        <div class="slider-group">
+          <label><span>Borrower Interest Rate (%)</span><span id="rateVal">12.0%</span></label>
+          <input type="range" id="rateInput" min="6" max="24" step="0.5" value="12" oninput="recalc()">
+        </div>
+        <div class="slider-group">
+          <label><span>Junior Tranche Capital Ratio (%)</span><span id="ratioVal">20.0% First-Loss</span></label>
+          <input type="range" id="ratioInput" min="10" max="40" step="5" value="20" oninput="recalc()">
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Senior Tranche Capital ($800k):</span>
+          <span class="metric-value val-blue" id="seniorApy">8.64% Net APY</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Junior Backer Tranche ($200k):</span>
+          <span class="metric-value val-gold" id="juniorApy">19.44% Net APY</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Junior Risk-Premium Yield Boost:</span>
+          <span class="metric-value val-success" id="boostVal">+10.80% APR</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Senior Net Annual Interest:</span>
+          <span class="metric-value val-blue" id="seniorInc">$69,120.00 / yr</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Junior Net Annual Interest:</span>
+          <span class="metric-value val-gold" id="juniorInc">$38,880.00 / yr</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Default Impairment Waterfall -->
+      <div class="card">
+        <h2>Default Loss Waterfall <span class="badge" style="margin:0;">Stress Test</span></h2>
+        <div class="slider-group">
+          <label><span>Borrower Default Loss ($)</span><span id="lossVal">$150,000 Loss</span></label>
+          <input type="range" id="lossInput" min="0" max="500000" step="25000" value="150000" oninput="recalc()">
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">First-Loss Buffer Capacity:</span>
+          <span class="metric-value val-gold" id="juniorBuffer">$200,000.00</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Junior Capital Impairment:</span>
+          <span class="metric-value val-danger" id="juniorImp">75.00% Impaired</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Senior Capital Impairment:</span>
+          <span class="metric-value val-success" id="seniorImp">0.00% (Protected)</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Senior Protection Status:</span>
+          <span class="metric-value val-success" id="protStatus">100% CAPITAL PROTECTED</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Loss Absorbed by Junior:</span>
+          <span class="metric-value val-gold" id="juniorLossAbs">$150,000.00</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Secondary Market Loan Token Discount -->
+      <div class="card">
+        <h2>Secondary Token Arbitrage <span class="badge" style="margin:0;">Liquidity Exit</span></h2>
+        <div class="slider-group">
+          <label><span>Secondary Market Discount (bps)</span><span id="discVal">150 bps (1.50%)</span></label>
+          <input type="range" id="discInput" min="25" max="500" step="25" value="150" oninput="recalc()">
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Secondary Purchase Price ($10k face):</span>
+          <span class="metric-value val-blue" id="secPrice">$9,850.00</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Immediate Par Discount Gain:</span>
+          <span class="metric-value val-success" id="discGain">+$150.00</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">6-Month Accrued Coupon (10%):</span>
+          <span class="metric-value val-gold">+$500.00</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Total 6-Month Realized Yield:</span>
+          <span class="metric-value val-success" id="annYield">13.20% Annualized</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Underlying Asset Security:</span>
+          <span class="metric-value val-blue">Audited Emerging Market SME Debt</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP License Section -->
+    <div class="vip-box">
+      <h3>Unlock Goldfinch VIP Sentinel License</h3>
+      <p style="color:var(--text-muted); max-width:650px; margin:0 auto 12px;">Automated on-chain webhook alerts for Junior tranche first-loss capacity depletion, borrower repayment delinquencies, and secondary loan token discount arbitrage.</p>
+      <div style="margin: 12px 0;">
+        <div><strong>Base Receive Address (5 USDC):</strong></div>
+        <span class="wallet-addr">0xF0E0D361bBE899F3089f0a968506eF2B97693c01</span>
+      </div>
+      <div>
+        <div><strong>Solana Receive Address (0.03 SOL):</strong></div>
+        <span class="wallet-addr">DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM</span>
+      </div>
+      <button class="btn" onclick="alert('Send 5 Base USDC or 0.03 SOL to the receive addresses above. The on-chain daemon monitors RPCs and automatically grants VIP access.')">Activate VIP License</button>
+    </div>
+  </div>
+
+  <script>
+    function recalc() {
+      // Card 1
+      const prin = parseFloat(document.getElementById('prinInput').value);
+      const rate = parseFloat(document.getElementById('rateInput').value);
+      const ratio = parseFloat(document.getElementById('ratioInput').value);
+
+      document.getElementById('prinVal').innerText = '$' + prin.toLocaleString();
+      document.getElementById('rateVal').innerText = rate.toFixed(1) + '%';
+      document.getElementById('ratioVal').innerText = ratio.toFixed(1) + '% First-Loss';
+
+      const juniorCap = prin * (ratio / 100.0);
+      const seniorCap = prin - juniorCap;
+
+      const seniorNominal = seniorCap * (rate / 100.0);
+      const juniorBonus = seniorNominal * 0.20; // 20% reallocation
+      const seniorNet = (seniorNominal - juniorBonus) * 0.90; // 10% protocol fee
+      const juniorNet = ((juniorCap * (rate / 100.0)) + juniorBonus) * 0.90;
+
+      const seniorApy = (seniorNet / seniorCap) * 100.0;
+      const juniorApy = (juniorNet / juniorCap) * 100.0;
+      const boost = juniorApy - seniorApy;
+
+      document.getElementById('seniorApy').innerText = seniorApy.toFixed(2) + '% Net APY';
+      document.getElementById('juniorApy').innerText = juniorApy.toFixed(2) + '% Net APY';
+      document.getElementById('boostVal').innerText = '+' + boost.toFixed(2) + '% APR';
+      document.getElementById('seniorInc').innerText = '$' + seniorNet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' / yr';
+      document.getElementById('juniorInc').innerText = '$' + juniorNet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' / yr';
+
+      // Card 2
+      const loss = parseFloat(document.getElementById('lossInput').value);
+      document.getElementById('lossVal').innerText = '$' + loss.toLocaleString() + ' Loss';
+      document.getElementById('juniorBuffer').innerText = '$' + juniorCap.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+      let juniorLoss = 0;
+      let seniorLoss = 0;
+      if (loss <= juniorCap) {
+        juniorLoss = loss;
+        seniorLoss = 0;
+      } else {
+        juniorLoss = juniorCap;
+        seniorLoss = loss - juniorCap;
+      }
+      const juniorImp = (juniorLoss / juniorCap) * 100.0;
+      const seniorImp = (seniorLoss / seniorCap) * 100.0;
+
+      document.getElementById('juniorImp').innerText = juniorImp.toFixed(2) + '% Impaired';
+      document.getElementById('seniorImp').innerText = seniorImp.toFixed(2) + '%' + (seniorLoss === 0 ? ' (Protected)' : ' Impaired');
+      document.getElementById('seniorImp').style.color = seniorLoss === 0 ? 'var(--success)' : 'var(--danger)';
+      
+      const protEl = document.getElementById('protStatus');
+      protEl.innerText = seniorLoss === 0 ? '100% CAPITAL PROTECTED' : 'CAPITAL IMPAIRED';
+      protEl.style.color = seniorLoss === 0 ? 'var(--success)' : 'var(--danger)';
+      document.getElementById('juniorLossAbs').innerText = '$' + juniorLoss.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+      // Card 3
+      const discBps = parseFloat(document.getElementById('discInput').value);
+      document.getElementById('discVal').innerText = discBps + ' bps (' + (discBps / 100).toFixed(2) + '%)';
+
+      const buyPrice = 10000.0 * (1.0 - (discBps / 10000.0));
+      const discGain = 10000.0 - buyPrice;
+      const coupon = 10000.0 * 0.10 * 0.5;
+      const totReturn = discGain + coupon;
+      const annYield = (totReturn / buyPrice) * 2.0 * 100.0;
+
+      document.getElementById('secPrice').innerText = '$' + buyPrice.toFixed(2);
+      document.getElementById('discGain').innerText = '+$' + discGain.toFixed(2);
+      document.getElementById('annYield').innerText = annYield.toFixed(2) + '% Annualized';
+    }
+    recalc();
+  </script>
+</body>
+</html>
