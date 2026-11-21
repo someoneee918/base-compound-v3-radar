@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solana Save Finance Isolated Pool & Liquidation Radar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #030712; color: #f9fafb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.4); }
+    .accent-gradient { background: linear-gradient(135deg, #14F195 0%, #FF6B00 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+  <div class="max-w-6xl mx-auto w-full space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-5 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-orange-900/60 text-orange-400 border border-orange-700">SOLANA LENDING</span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-900/60 text-emerald-400 border border-emerald-700">SAVE (EX-SOLEND)</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">Save Finance Isolated Pool & Liquidation Radar</h1>
+        <p class="text-sm text-gray-400">Multi-tier collateral health factors, piecewise utilization interest rate surges, and liquidator seizure bounties.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs text-gray-400">Network / Cluster</div>
+          <div class="text-sm font-bold text-white flex items-center justify-end gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Solana Mainnet-Beta</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Key Metrics Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Account Health Factor</div>
+        <div id="statHealthFactor" class="text-2xl font-black text-emerald-400 mt-1">1.143</div>
+        <div class="text-xs text-gray-500 mt-0.5">12.50% buffer before liq</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Pool Borrow APR</div>
+        <div id="statBorrowRate" class="text-2xl font-black text-orange-400 mt-1">6.50%</div>
+        <div class="text-xs text-gray-500 mt-0.5">Supply APY: 3.51%</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Liquidator Net Bounty</div>
+        <div id="statLiquidatorBounty" class="text-2xl font-black text-yellow-400 mt-1">$271.10</div>
+        <div class="text-xs text-gray-500 mt-0.5">8.0% seizure bonus</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Close Factor Chunk</div>
+        <div id="statCloseChunk" class="text-2xl font-black text-cyan-400 mt-1">$3,400.00</div>
+        <div class="text-xs text-gray-500 mt-0.5">20% max single repayment</div>
+      </div>
+    </div>
+
+    <!-- Simulator Inputs & Output Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Input Controls -->
+      <div class="glass-card p-5 rounded-xl space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-orange-400"></i> Reserve & Account Controls
+        </h3>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Deposited Collateral (USD)</span>
+            <span id="labelCollateral" class="font-bold text-white">$20,000</span>
+          </div>
+          <input type="range" id="inputCollateral" min="5000" max="100000" step="1000" value="20000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Borrowed Debt (USD)</span>
+            <span id="labelDebt" class="font-bold text-rose-400">$14,000</span>
+          </div>
+          <input type="range" id="inputDebt" min="1000" max="80000" step="1000" value="14000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Pool Utilization (%)</span>
+            <span id="labelUtil" class="font-bold text-orange-400">60%</span>
+          </div>
+          <input type="range" id="inputUtil" min="10" max="98" step="1" value="60" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-400">Liq Threshold (%)</label>
+            <input type="number" id="inputLiqThresh" value="80.0" step="1" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400">Close Factor (%)</label>
+            <input type="number" id="inputCloseFactor" value="20.0" step="5" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+        </div>
+
+        <button onclick="recalculate()" class="w-full py-2 px-4 rounded-lg bg-orange-600 hover:bg-orange-500 font-semibold text-sm transition">
+          Recalculate Radar
+        </button>
+      </div>
+
+      <!-- Strategy Ledger & Breakdown -->
+      <div class="glass-card p-5 rounded-xl space-y-4 lg:col-span-2">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-cyan-400"></i> Liquidation Health & Kink Interest Curve
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">Account Margin & Health Factor</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Effective Liq Threshold USD</span>
+              <span id="cellLiqThresholdUsd" class="font-bold text-white">$16,000.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Maximum Price Drawdown</span>
+              <span id="cellMaxDrawdown" class="font-bold text-cyan-400">12.50%</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Borrow Interest Rate</span>
+              <span id="cellBorrowRate" class="font-bold text-orange-400">6.50% APR</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Lender Supply APY</span>
+              <span id="cellSupplyApy" class="font-bold text-emerald-400">3.51% APY</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Account Status</span>
+              <span id="badgeStatus" class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600">HEALTHY POSITION</span>
+            </div>
+          </div>
+
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">Liquidator Seizure Economics (20% Chunk)</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Repayment Chunk (20%)</span>
+              <span id="cellRepaid" class="font-bold text-white">$2,800.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Seized Collateral Value (8% Bonus)</span>
+              <span id="cellSeized" class="font-bold text-emerald-400">$3,024.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Gross Seizure Bounty</span>
+              <span id="cellGrossBounty" class="font-bold text-yellow-400">+$224.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Solana Priority Fee (0.005 SOL)</span>
+              <span class="font-bold text-rose-400">-$0.90</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Net Liquidator Profit</span>
+              <span id="cellNetBounty" class="font-bold text-emerald-400">+$223.10 net</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP License Commercial Module -->
+    <div class="glass-card p-6 rounded-xl border border-orange-500/30">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <span class="px-2.5 py-0.5 text-xs font-bold uppercase rounded-full bg-orange-900/80 text-orange-300 border border-orange-600">COMMERCIAL VIP ACCESS</span>
+          <h2 class="text-xl font-black text-white mt-1">Unlock Automated Save Isolated Pool Sentinel & Liquidator Bot</h2>
+          <p class="text-sm text-gray-400">Real-time alerts when account health factors drop below 1.05, automated high-interest rate pool deposit triggers, and atomic flash-liquidator snipers.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01', 'Base')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-brands fa-ethereum"></i> Pay 5 Base USDC
+          </button>
+          <button onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM', 'Solana')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-bolt"></i> Pay 0.03 SOL
+          </button>
+        </div>
+      </div>
+      <div id="copyNotice" class="hidden mt-3 p-2 text-xs bg-emerald-950/80 border border-emerald-700 text-emerald-300 rounded"></div>
+    </div>
+  </div>
+
+  <footer class="mt-8 border-t border-gray-800 pt-4 text-center text-xs text-gray-500">
+    <p>Save Finance Isolated Pool Radar &copy; 2026. Non-custodial analytics on Solana Mainnet-Beta.</p>
+  </footer>
+
+  <script>
+    function recalculate() {
+      const collateral = parseFloat(document.getElementById('inputCollateral').value);
+      const debt = parseFloat(document.getElementById('inputDebt').value);
+      const util = parseFloat(document.getElementById('inputUtil').value);
+      const liqThresh = parseFloat(document.getElementById('inputLiqThresh').value);
+      const closeFactor = parseFloat(document.getElementById('inputCloseFactor').value);
+
+      document.getElementById('labelCollateral').innerText = '$' + collateral.toLocaleString();
+      document.getElementById('labelDebt').innerText = '$' + debt.toLocaleString();
+      document.getElementById('labelUtil').innerText = util + '%';
+
+      const liqThreshUsd = collateral * (liqThresh / 100.0);
+      const hf = debt > 0 ? (liqThreshUsd / debt) : 999.0;
+      const maxDrawdown = debt > 0 ? Math.max(0, (1 - (debt / liqThreshUsd)) * 100.0) : 100.0;
+      const isLiq = hf < 1.0;
+
+      let borrowRate = 2.0;
+      if (util <= 80.0) {
+        borrowRate = 2.0 + (util / 80.0) * 6.0;
+      } else {
+        const excess = (util - 80.0) / 20.0;
+        borrowRate = 2.0 + 6.0 + (excess * 50.0);
+      }
+      const supplyApy = (borrowRate * (util / 100.0)) * 0.90;
+
+      const repaid = debt * (closeFactor / 100.0);
+      const seized = repaid * 1.08;
+      const grossBounty = seized - repaid;
+      const netBounty = Math.max(0, grossBounty - 0.90);
+
+      document.getElementById('statHealthFactor').innerText = hf.toFixed(3);
+      document.getElementById('statBorrowRate').innerText = borrowRate.toFixed(2) + '%';
+      document.getElementById('statLiquidatorBounty').innerText = '$' + netBounty.toFixed(2);
+      document.getElementById('statCloseChunk').innerText = '$' + repaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+      document.getElementById('cellLiqThresholdUsd').innerText = '$' + liqThreshUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('cellMaxDrawdown').innerText = maxDrawdown.toFixed(2) + '%';
+      document.getElementById('cellBorrowRate').innerText = borrowRate.toFixed(2) + '% APR';
+      document.getElementById('cellSupplyApy').innerText = supplyApy.toFixed(2) + '% APY';
+
+      document.getElementById('cellRepaid').innerText = '$' + repaid.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('cellSeized').innerText = '$' + seized.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('cellGrossBounty').innerText = '+$' + grossBounty.toFixed(2);
+      document.getElementById('cellNetBounty').innerText = '+$' + netBounty.toFixed(2) + ' net';
+
+      const badge = document.getElementById('badgeStatus');
+      if (isLiq) {
+        badge.innerText = 'LIQUIDATION ACTIVE';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-rose-900/60 text-rose-300 border border-rose-600';
+      } else if (maxDrawdown < 5.0) {
+        badge.innerText = 'MARGIN WARNING';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-yellow-900/60 text-yellow-300 border border-yellow-600';
+      } else {
+        badge.innerText = 'HEALTHY POSITION';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600';
+      }
+    }
+
+    document.getElementById('inputCollateral').addEventListener('input', recalculate);
+    document.getElementById('inputDebt').addEventListener('input', recalculate);
+    document.getElementById('inputUtil').addEventListener('input', recalculate);
+    document.getElementById('inputLiqThresh').addEventListener('input', recalculate);
+    document.getElementById('inputCloseFactor').addEventListener('input', recalculate);
+
+    function copyWallet(address, network) {
+      navigator.clipboard.writeText(address);
+      const notice = document.getElementById('copyNotice');
+      notice.innerHTML = '<strong>' + network + ' Address Copied:</strong> ' + address + ' (Send payment and message @SolGuardScanBot with tx hash for instant VIP API key activation)';
+      notice.classList.remove('hidden');
+      setTimeout(() => notice.classList.add('hidden'), 8000);
+    }
+
+    recalculate();
+  </script>
+</body>
+</html>
