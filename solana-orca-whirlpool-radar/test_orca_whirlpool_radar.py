@@ -44,7 +44,7 @@ class TestOrcaWhirlpoolRadar(unittest.TestCase):
             days_horizon=7.0
         )
         self.assertGreater(res_in.in_range_probability_pct, 40.0)
-        self.assertIn("RANGE", res_in.status)
+        self.assertIn(res_in.status, ["STABLE_IN_RANGE", "MODERATE_DRIFT_WATCH"])
         self.assertLess(res_in.rebalance_urgency_score, 80)
         
         # Out of range lower
