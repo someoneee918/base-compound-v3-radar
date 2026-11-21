@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solana BlazeStake (bSOL) Fair NAV & Gauge Radar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #030712; color: #f9fafb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.4); }
+    .accent-gradient { background: linear-gradient(135deg, #14F195 0%, #F97316 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+  <div class="max-w-6xl mx-auto w-full space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-5 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-orange-900/60 text-orange-400 border border-orange-700">SOLANA LST</span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-900/60 text-emerald-400 border border-emerald-700">BLAZESTAKE bSOL</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">BlazeStake (bSOL) Fair NAV & Gauge Radar</h1>
+        <p class="text-sm text-gray-400">On-chain true fair NAV backing vs secondary DEX discount arbitrage, validator gauge directed stake, and redemption sentinels.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs text-gray-400">Network / Cluster</div>
+          <div class="text-sm font-bold text-white flex items-center justify-end gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Solana Mainnet-Beta</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Key Metrics Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">True Fair NAV</div>
+        <div id="statNav" class="text-2xl font-black text-emerald-400 mt-1">1.0800 SOL</div>
+        <div class="text-xs text-gray-500 mt-0.5">7.20% annual accretion</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">DEX Discount</div>
+        <div id="statDiscount" class="text-2xl font-black text-cyan-400 mt-1">0.74%</div>
+        <div class="text-xs text-gray-500 mt-0.5">Secondary price: 1.0720 SOL</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Net Arbitrage Profit</div>
+        <div id="statNetArb" class="text-2xl font-black text-yellow-400 mt-1">+$67.16</div>
+        <div class="text-xs text-gray-500 mt-0.5">+0.373 SOL on 50 SOL trade</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Gauge Directed Stake</div>
+        <div id="statGaugeStake" class="text-2xl font-black text-orange-400 mt-1">500.0 SOL</div>
+        <div class="text-xs text-gray-500 mt-0.5">On 100k BLZE votes</div>
+      </div>
+    </div>
+
+    <!-- Simulator Inputs & Output Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Input Controls -->
+      <div class="glass-card p-5 rounded-xl space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-orange-400"></i> Market & Stake Controls
+        </h3>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Staked SOL Reserves</span>
+            <span id="labelReserves" class="font-bold text-white">1,080,000 SOL</span>
+          </div>
+          <input type="range" id="inputReserves" min="500000" max="2000000" step="10000" value="1080000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>bSOL Total Supply</span>
+            <span id="labelSupply" class="font-bold text-cyan-400">1,000,000 bSOL</span>
+          </div>
+          <input type="range" id="inputSupply" min="500000" max="2000000" step="10000" value="1000000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Secondary DEX Price (SOL)</span>
+            <span id="labelDexPrice" class="font-bold text-orange-400">1.0720 SOL</span>
+          </div>
+          <input type="range" id="inputDexPrice" min="1.050" max="1.100" step="0.001" value="1.072" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-400">Trade Size (SOL)</label>
+            <input type="number" id="inputTradeSize" value="50.0" step="5.0" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400">SOL Price ($)</label>
+            <input type="number" id="inputSolPrice" value="180.0" step="5.0" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+        </div>
+
+        <button onclick="recalculate()" class="w-full py-2 px-4 rounded-lg bg-orange-600 hover:bg-orange-500 font-semibold text-sm transition">
+          Recalculate Radar
+        </button>
+      </div>
+
+      <!-- Strategy Ledger & Breakdown -->
+      <div class="glass-card p-5 rounded-xl space-y-4 lg:col-span-2">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-cyan-400"></i> NAV Accretion & Redemption Ledger
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">bSOL Fair NAV Schedule</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Current Fair NAV</span>
+              <span id="cellFairNav" class="font-bold text-emerald-400">1.080000 SOL</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Projected 30-Day NAV</span>
+              <span id="cellNav30d" class="font-bold text-white">1.086395 SOL</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Projected 1-Year NAV</span>
+              <span id="cellNav1y" class="font-bold text-cyan-400">1.157760 SOL</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Daily Staking Accretion</span>
+              <span class="font-bold text-emerald-400">+1.91 bps/day</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Opportunity Tier</span>
+              <span id="badgeTier" class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600">HIGH CONVICTION ARB</span>
+            </div>
+          </div>
+
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">Discount Redemption Arbitrage</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">bSOL Acquired on DEX</span>
+              <span id="cellBsolAcquired" class="font-bold text-white">46.6418 bSOL</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">SOL Value at Fair NAV</span>
+              <span id="cellSolRedeemed" class="font-bold text-emerald-400">50.3731 SOL</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Gross Profit (SOL)</span>
+              <span id="cellGrossSol" class="font-bold text-yellow-400">+0.3731 SOL</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Net Dollar Value</span>
+              <span id="cellNetDollar" class="font-bold text-emerald-400">+$67.16</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Arbitrage Net ROI</span>
+              <span id="cellRoi" class="font-bold text-emerald-400">0.75%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP License Commercial Module -->
+    <div class="glass-card p-6 rounded-xl border border-orange-500/30">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <span class="px-2.5 py-0.5 text-xs font-bold uppercase rounded-full bg-orange-900/80 text-orange-300 border border-orange-600">COMMERCIAL VIP ACCESS</span>
+          <h2 class="text-xl font-black text-white mt-1">Unlock Automated BlazeStake Sentinel & bSOL Arb Bot</h2>
+          <p class="text-sm text-gray-400">Real-time webhook alerts when secondary DEX bSOL discounts widen >0.30%, automated delayed unstake epoch redemption snipers, and BLZE gauge yield optimizers.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01', 'Base')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-brands fa-ethereum"></i> Pay 5 Base USDC
+          </button>
+          <button onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM', 'Solana')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-bolt"></i> Pay 0.03 SOL
+          </button>
+        </div>
+      </div>
+      <div id="copyNotice" class="hidden mt-3 p-2 text-xs bg-emerald-950/80 border border-emerald-700 text-emerald-300 rounded"></div>
+    </div>
+  </div>
+
+  <footer class="mt-8 border-t border-gray-800 pt-4 text-center text-xs text-gray-500">
+    <p>BlazeStake (bSOL) Radar &copy; 2026. Non-custodial analytics on Solana Mainnet-Beta.</p>
+  </footer>
+
+  <script>
+    function recalculate() {
+      const reserves = parseFloat(document.getElementById('inputReserves').value);
+      const supply = parseFloat(document.getElementById('inputSupply').value);
+      const dexPrice = parseFloat(document.getElementById('inputDexPrice').value);
+      const tradeSize = parseFloat(document.getElementById('inputTradeSize').value);
+      const solPrice = parseFloat(document.getElementById('inputSolPrice').value);
+
+      document.getElementById('labelReserves').innerText = reserves.toLocaleString() + ' SOL';
+      document.getElementById('labelSupply').innerText = supply.toLocaleString() + ' bSOL';
+      document.getElementById('labelDexPrice').innerText = dexPrice.toFixed(4) + ' SOL';
+
+      const fairNav = reserves / supply;
+      const dailyRate = Math.pow(1.072, 1.0 / 365.0) - 1.0;
+      const nav30d = fairNav * (1.0 + (dailyRate * 30.0));
+      const nav1y = fairNav * 1.072;
+
+      const discount = Math.max(0, (fairNav - dexPrice) / fairNav * 100.0);
+      let bsolAcquired = 0;
+      let solRedeemed = 0;
+      let profitSol = 0;
+      let profitUsd = 0;
+      let roi = 0;
+
+      if (dexPrice < fairNav) {
+        bsolAcquired = tradeSize / dexPrice;
+        solRedeemed = bsolAcquired * fairNav;
+        profitSol = solRedeemed - tradeSize;
+        profitUsd = profitSol * solPrice;
+        roi = (profitSol / tradeSize) * 100.0;
+      }
+
+      document.getElementById('statNav').innerText = fairNav.toFixed(4) + ' SOL';
+      document.getElementById('statDiscount').innerText = discount.toFixed(2) + '%';
+      document.getElementById('statNetArb').innerText = '+$' + profitUsd.toFixed(2);
+
+      document.getElementById('cellFairNav').innerText = fairNav.toFixed(6) + ' SOL';
+      document.getElementById('cellNav30d').innerText = nav30d.toFixed(6) + ' SOL';
+      document.getElementById('cellNav1y').innerText = nav1y.toFixed(6) + ' SOL';
+
+      document.getElementById('cellBsolAcquired').innerText = bsolAcquired.toFixed(4) + ' bSOL';
+      document.getElementById('cellSolRedeemed').innerText = solRedeemed.toFixed(4) + ' SOL';
+      document.getElementById('cellGrossSol').innerText = '+' + profitSol.toFixed(4) + ' SOL';
+      document.getElementById('cellNetDollar').innerText = '+$' + profitUsd.toFixed(2);
+      document.getElementById('cellRoi').innerText = roi.toFixed(2) + '%';
+
+      const badge = document.getElementById('badgeTier');
+      if (discount >= 0.40) {
+        badge.innerText = 'HIGH CONVICTION ARB';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600';
+      } else if (discount > 0) {
+        badge.innerText = 'DISCOUNT ACCUMULATION';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-cyan-900/60 text-cyan-300 border border-cyan-600';
+      } else {
+        badge.innerText = 'STANDARD ACCRETION';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-gray-900/60 text-gray-300 border border-gray-600';
+      }
+    }
+
+    document.getElementById('inputReserves').addEventListener('input', recalculate);
+    document.getElementById('inputSupply').addEventListener('input', recalculate);
+    document.getElementById('inputDexPrice').addEventListener('input', recalculate);
+    document.getElementById('inputTradeSize').addEventListener('input', recalculate);
+    document.getElementById('inputSolPrice').addEventListener('input', recalculate);
+
+    function copyWallet(address, network) {
+      navigator.clipboard.writeText(address);
+      const notice = document.getElementById('copyNotice');
+      notice.innerHTML = '<strong>' + network + ' Address Copied:</strong> ' + address + ' (Send payment and message @SolGuardScanBot with tx hash for instant VIP API key activation)';
+      notice.classList.remove('hidden');
+      setTimeout(() => notice.classList.add('hidden'), 8000);
+    }
+
+    recalculate();
+  </script>
+</body>
+</html>
