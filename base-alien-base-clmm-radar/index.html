@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Alien Base Area 51 & StableSwap Radar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #030712; color: #f9fafb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.4); }
+    .accent-gradient { background: linear-gradient(135deg, #10B981 0%, #06B6D4 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+  <div class="max-w-6xl mx-auto w-full space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-5 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-900/60 text-emerald-400 border border-emerald-700">BASE L2</span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-cyan-900/60 text-cyan-400 border border-cyan-700">ALIEN BASE AREA 51</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">Alien Base Area 51 & StableSwap Radar</h1>
+        <p class="text-sm text-gray-400">Area 51 concentrated tick capital efficiency, StableSwap low-slippage amplification curves, and atomic DEX arbitrage.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs text-gray-400">Network / Protocol</div>
+          <div class="text-sm font-bold text-white flex items-center justify-end gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Base Mainnet (8453)</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Key Metrics Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Area 51 Multiplier</div>
+        <div id="statMultiplier" class="text-2xl font-black text-emerald-400 mt-1">50.48x</div>
+        <div class="text-xs text-gray-500 mt-0.5">[0.98, 1.02] tick range</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">StableSwap Savings</div>
+        <div id="statSavings" class="text-2xl font-black text-cyan-400 mt-1">$2,497.50</div>
+        <div class="text-xs text-gray-500 mt-0.5">Vs Uni v2 on $50k swap</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">DEX Spread</div>
+        <div id="statSpread" class="text-2xl font-black text-purple-400 mt-1">0.35%</div>
+        <div class="text-xs text-gray-500 mt-0.5">Alien Base vs Aerodrome</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Net Arbitrage Profit</div>
+        <div id="statNetArb" class="text-2xl font-black text-yellow-400 mt-1">+$34.96</div>
+        <div class="text-xs text-gray-500 mt-0.5">On $10,000 flash volume</div>
+      </div>
+    </div>
+
+    <!-- Simulator Inputs & Output Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Input Controls -->
+      <div class="glass-card p-5 rounded-xl space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-emerald-400"></i> Market & Tick Controls
+        </h3>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-400">Lower Tick Price</label>
+            <input type="number" id="inputLower" value="0.98" step="0.01" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400">Upper Tick Price</label>
+            <input type="number" id="inputUpper" value="1.02" step="0.01" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Current Asset Price</span>
+            <span id="labelCurrent" class="font-bold text-white">1.0000</span>
+          </div>
+          <input type="range" id="inputCurrent" min="0.95" max="1.05" step="0.005" value="1.000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>StableSwap Trade Size ($)</span>
+            <span id="labelTrade" class="font-bold text-cyan-400">$50,000</span>
+          </div>
+          <input type="range" id="inputTrade" min="5000" max="200000" step="5000" value="50000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>DEX Arbitrage Spread (%)</span>
+            <span id="labelSpread" class="font-bold text-yellow-400">0.35%</span>
+          </div>
+          <input type="range" id="inputSpread" min="0.05" max="1.50" step="0.05" value="0.35" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <button onclick="recalculate()" class="w-full py-2 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-sm transition">
+          Recalculate Radar
+        </button>
+      </div>
+
+      <!-- Strategy Ledger & Breakdown -->
+      <div class="glass-card p-5 rounded-xl space-y-4 lg:col-span-2">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-cyan-400"></i> Area 51 Analytics & Slippage Ledger
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">Area 51 Concentrated Tick Status</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Tick Range Multiplier</span>
+              <span id="cellMultiplier" class="font-bold text-emerald-400">50.48x</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Position In-Range Status</span>
+              <span id="cellInRange" class="font-bold text-white">Active (In-Range)</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Amplification Factor (A)</span>
+              <span class="font-bold text-cyan-400">A = 100</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">StableSwap Slippage</span>
+              <span id="cellSlippagePct" class="font-bold text-emerald-400">0.0050%</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Opportunity Tier</span>
+              <span id="badgeTier" class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600">HIGH CONVICTION ARB</span>
+            </div>
+          </div>
+
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">Cross-DEX Arbitrage Economics</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Flash Volume ($10k trade)</span>
+              <span class="font-bold text-white">$10,000.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Gross Arbitrage Yield</span>
+              <span id="cellGrossArb" class="font-bold text-yellow-400">+$35.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Base L2 Gas Execution Cost</span>
+              <span class="font-bold text-rose-400">-$0.04</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Net Profit Per Flash Arb</span>
+              <span id="cellNetArb" class="font-bold text-emerald-400">+$34.96 net</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Arbitrage Efficiency</span>
+              <span class="font-bold text-emerald-400">99.89%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP License Commercial Module -->
+    <div class="glass-card p-6 rounded-xl border border-emerald-500/30">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <span class="px-2.5 py-0.5 text-xs font-bold uppercase rounded-full bg-emerald-900/80 text-emerald-300 border border-emerald-600">COMMERCIAL VIP ACCESS</span>
+          <h2 class="text-xl font-black text-white mt-1">Unlock Automated Alien Base Sentinel & Area 51 Sniper</h2>
+          <p class="text-sm text-gray-400">Sub-second webhook alerts when Area 51 tick positions move out-of-range, automated StableSwap depeg monitors, and atomic flash-loan snipers.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01', 'Base')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-brands fa-ethereum"></i> Pay 5 Base USDC
+          </button>
+          <button onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM', 'Solana')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-bolt"></i> Pay 0.03 SOL
+          </button>
+        </div>
+      </div>
+      <div id="copyNotice" class="hidden mt-3 p-2 text-xs bg-emerald-950/80 border border-emerald-700 text-emerald-300 rounded"></div>
+    </div>
+  </div>
+
+  <footer class="mt-8 border-t border-gray-800 pt-4 text-center text-xs text-gray-500">
+    <p>Alien Base Area 51 & StableSwap Radar &copy; 2026. Non-custodial analytics on Base L2.</p>
+  </footer>
+
+  <script>
+    function recalculate() {
+      const lower = parseFloat(document.getElementById('inputLower').value);
+      const upper = parseFloat(document.getElementById('inputUpper').value);
+      const current = parseFloat(document.getElementById('inputCurrent').value);
+      const trade = parseFloat(document.getElementById('inputTrade').value);
+      const spread = parseFloat(document.getElementById('inputSpread').value);
+
+      document.getElementById('labelCurrent').innerText = current.toFixed(4);
+      document.getElementById('labelTrade').innerText = '$' + trade.toLocaleString();
+      document.getElementById('labelSpread').innerText = spread.toFixed(2) + '%';
+
+      const ratio = lower / upper;
+      const mult = Math.min(500.0, 1.0 / (1.0 - Math.sqrt(ratio)));
+      const inRange = current >= lower && current <= upper;
+
+      const tradeRatio = trade / 1000000.0;
+      const slippagePct = tradeRatio * (100.0 / 100.0) * 0.10;
+      const slippageCost = trade * (slippagePct / 100.0);
+      const v2SlippageCost = trade * tradeRatio;
+      const savings = Math.max(0, v2SlippageCost - slippageCost);
+
+      const grossArb = 10000.0 * (spread / 100.0);
+      const netArb = Math.max(0, grossArb - 0.04);
+
+      document.getElementById('statMultiplier').innerText = mult.toFixed(2) + 'x';
+      document.getElementById('statSavings').innerText = '$' + savings.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('statSpread').innerText = spread.toFixed(2) + '%';
+      document.getElementById('statNetArb').innerText = '+$' + netArb.toFixed(2);
+
+      document.getElementById('cellMultiplier').innerText = mult.toFixed(2) + 'x';
+      document.getElementById('cellInRange').innerText = inRange ? 'Active (In-Range)' : 'Out-Of-Range';
+      document.getElementById('cellInRange').className = inRange ? 'font-bold text-emerald-400' : 'font-bold text-rose-400';
+      document.getElementById('cellSlippagePct').innerText = slippagePct.toFixed(4) + '%';
+
+      document.getElementById('cellGrossArb').innerText = '+$' + grossArb.toFixed(2);
+      document.getElementById('cellNetArb').innerText = '+$' + netArb.toFixed(2) + ' net';
+
+      const badge = document.getElementById('badgeTier');
+      if (spread >= 0.25) {
+        badge.innerText = 'HIGH CONVICTION ARB';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600';
+      } else if (inRange && mult >= 40.0) {
+        badge.innerText = 'PRIME AREA 51 TICK';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-cyan-900/60 text-cyan-300 border border-cyan-600';
+      } else {
+        badge.innerText = 'STANDARD MONITOR';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-gray-900/60 text-gray-300 border border-gray-600';
+      }
+    }
+
+    document.getElementById('inputLower').addEventListener('input', recalculate);
+    document.getElementById('inputUpper').addEventListener('input', recalculate);
+    document.getElementById('inputCurrent').addEventListener('input', recalculate);
+    document.getElementById('inputTrade').addEventListener('input', recalculate);
+    document.getElementById('inputSpread').addEventListener('input', recalculate);
+
+    function copyWallet(address, network) {
+      navigator.clipboard.writeText(address);
+      const notice = document.getElementById('copyNotice');
+      notice.innerHTML = '<strong>' + network + ' Address Copied:</strong> ' + address + ' (Send payment and message @SolGuardScanBot with tx hash for instant VIP API key activation)';
+      notice.classList.remove('hidden');
+      setTimeout(() => notice.classList.add('hidden'), 8000);
+    }
+
+    recalculate();
+  </script>
+</body>
+</html>
