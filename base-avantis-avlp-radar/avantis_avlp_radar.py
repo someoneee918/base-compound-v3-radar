@@ -132,7 +132,7 @@ def simulate_skew_funding_velocity(
     hourly_bps = (annual_funding / (365.0 * 24.0)) * 100.0
     
     arb_roi = annual_funding - 2.5 # minus hedging costs
-    if abs(skew_ratio) > 0.40:
+    if abs(skew_ratio) >= 0.40:
         urgency = "HIGH_CONVICTION_ARBITRAGE"
     elif abs(skew_ratio) > 0.15:
         urgency = "MODERATE_CARRY_OPPORTUNITY"
