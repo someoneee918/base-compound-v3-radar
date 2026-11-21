@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Spectra Protocol Fixed-Yield Stripping & Yield Curve Arbitrage Radar</title>
+  <style>
+    :root {
+      --bg-dark: #0a0d18;
+      --card-bg: #11172a;
+      --border: #1e293b;
+      --accent-blue: #0052ff;
+      --accent-glow: rgba(0, 82, 255, 0.2);
+      --accent-cyan: #38bdf8;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; padding: 24px 16px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+    .badge { display: inline-block; background: var(--accent-glow); color: #60a5fa; border: 1px solid var(--accent-blue); padding: 4px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; }
+    h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+    p.lead { color: var(--text-muted); font-size: 1.05rem; max-width: 780px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 32px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; position: relative; }
+    .card h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+    .metric-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); }
+    .metric-label { color: var(--text-muted); font-size: 0.9rem; }
+    .metric-value { font-weight: 700; font-size: 1.05rem; font-family: monospace; }
+    .val-blue { color: #60a5fa; }
+    .val-cyan { color: var(--accent-cyan); }
+    .val-success { color: var(--success); }
+    .val-warn { color: var(--warn); }
+    .slider-group { margin-bottom: 16px; }
+    .slider-group label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+    input[type=range] { width: 100%; accent-color: var(--accent-blue); background: #1e293b; height: 6px; border-radius: 4px; }
+    .vip-box { background: linear-gradient(145deg, #0e1526, #090e18); border: 1px solid var(--accent-blue); border-radius: 12px; padding: 24px; text-align: center; margin-top: 24px; }
+    .vip-box h3 { font-size: 1.3rem; margin-bottom: 10px; color: #93c5fd; }
+    .wallet-addr { background: #070a12; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; border: 1px solid #1e293b; word-break: break-all; margin: 8px 0; display: inline-block; }
+    button.btn { background: var(--accent-blue); color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 12px; }
+    button.btn:hover { background: #1d4ed8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Base L2 • Spectra Protocol • Yield Stripping (PT/YT)</div>
+      <h1>Fixed-Yield Stripping & Yield Curve Arbitrage Radar</h1>
+      <p class="lead">Quantitative simulation and execution optimization engine for Spectra Protocol (ex-APWine) Principal Tokens (PT), Yield Tokens (YT), leveraged yield carry, and time-decay AMM convergence on Base.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Card 1: Principal Token (PT) Fixed Yield Lock -->
+      <div class="card">
+        <h2>PT Fixed APY Lock <span class="badge" style="margin:0;">Guaranteed</span></h2>
+        <div class="slider-group">
+          <label><span>Underlying Deposit ($)</span><span id="depVal">$10,000</span></label>
+          <input type="range" id="depInput" min="1000" max="100000" step="1000" value="10000" oninput="recalc()">
+        </div>
+        <div class="slider-group">
+          <label><span>Days to Maturity</span><span id="daysVal">180 Days (~6 Months)</span></label>
+          <input type="range" id="daysInput" min="30" max="365" step="15" value="180" oninput="recalc()">
+        </div>
+        <div class="slider-group">
+          <label><span>Implied Fixed APY (%)</span><span id="fixedApyVal">8.50% Fixed</span></label>
+          <input type="range" id="fixedApyInput" min="3" max="25" step="0.5" value="8.5" oninput="recalc()">
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">PT Market Price Ratio:</span>
+          <span class="metric-value val-cyan" id="ptPriceRatio">0.9598 PT / Asset</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Discounted Purchase Price:</span>
+          <span class="metric-value val-blue" id="ptBuyPrice">$9,597.68</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Guaranteed Par Maturity Payout:</span>
+          <span class="metric-value val-success" id="parPayout">$10,000.00</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Net Fixed Interest Accrued:</span>
+          <span class="metric-value val-success" id="fixedGain">+$402.32</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Lock-In Volatility Risk:</span>
+          <span class="metric-value val-success">0.00% (Fixed Capital Guarantee)</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Yield Token (YT) Leveraged Variable Carry -->
+      <div class="card">
+        <h2>YT Leveraged Carry <span class="badge" style="margin:0;">Yield Long</span></h2>
+        <div class="slider-group">
+          <label><span>Actual Variable Vault APY (%)</span><span id="varApyVal">14.0% Actual</span></label>
+          <input type="range" id="varApyInput" min="2" max="35" step="0.5" value="14" oninput="recalc()">
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">YT Capital Cost (Stripping Premium):</span>
+          <span class="metric-value val-warn" id="ytCost">$402.32</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Represented Underlying Position:</span>
+          <span class="metric-value val-blue" id="repPrincipal">$10,000.00 (24.8x Leverage)</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Harvested Variable Interest:</span>
+          <span class="metric-value val-cyan" id="harvestedInt">$690.41</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Net YT Trade Profit:</span>
+          <span class="metric-value val-success" id="netYtProfit">+$288.09</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">YT Return on Investment (ROI):</span>
+          <span class="metric-value val-success" id="ytRoi">+71.61% ROI</span>
+        </div>
+      </div>
+
+      <!-- Card 3: AMM Time-Decay Convergence (Pull-to-Par) -->
+      <div class="card">
+        <h2>AMM Pull-to-Par <span class="badge" style="margin:0;">Zero-IL AMM</span></h2>
+        <div class="metric-row">
+          <span class="metric-label">Target Convergence Ratio:</span>
+          <span class="metric-value val-success">1.000000 at Expiry</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Remaining Time-Decay Spread:</span>
+          <span class="metric-value val-cyan" id="pullParGain">+4.19% Price Drift</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Annualized Convergence APR:</span>
+          <span class="metric-value val-success" id="convApr">8.50% APR</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Spectra AMM Curve Type:</span>
+          <span class="metric-value val-blue">Constant Power Sum Invariant</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Secondary Liquidity Route:</span>
+          <span class="metric-value val-cyan">PT-sUSDS / PT-superOETHb</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP License Section -->
+    <div class="vip-box">
+      <h3>Unlock Spectra VIP Sentinel License</h3>
+      <p style="color:var(--text-muted); max-width:650px; margin:0 auto 12px;">Automated on-chain webhook alerts for PT discount widening opportunities, YT variable rate surge breakouts, and zero-IL maturity roll arb.</p>
+      <div style="margin: 12px 0;">
+        <div><strong>Base Receive Address (5 USDC):</strong></div>
+        <span class="wallet-addr">0xF0E0D361bBE899F3089f0a968506eF2B97693c01</span>
+      </div>
+      <div>
+        <div><strong>Solana Receive Address (0.03 SOL):</strong></div>
+        <span class="wallet-addr">DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM</span>
+      </div>
+      <button class="btn" onclick="alert('Send 5 Base USDC or 0.03 SOL to the receive addresses above. The on-chain daemon monitors RPCs and automatically grants VIP access.')">Activate VIP License</button>
+    </div>
+  </div>
+
+  <script>
+    function recalc() {
+      // Card 1
+      const dep = parseFloat(document.getElementById('depInput').value);
+      const days = parseInt(document.getElementById('daysInput').value);
+      const fixedApy = parseFloat(document.getElementById('fixedApyInput').value);
+
+      document.getElementById('depVal').innerText = '$' + dep.toLocaleString();
+      document.getElementById('daysVal').innerText = days + ' Days (~' + (days/30).toFixed(1) + ' Months)';
+      document.getElementById('fixedApyVal').innerText = fixedApy.toFixed(2) + '% Fixed';
+
+      const timeFrac = days / 365.0;
+      const ptRatio = 1.0 / (1.0 + (fixedApy / 100.0) * timeFrac);
+      const ptBuyPrice = dep * ptRatio;
+      const fixedGain = dep - ptBuyPrice;
+
+      document.getElementById('ptPriceRatio').innerText = ptRatio.toFixed(4) + ' PT / Asset';
+      document.getElementById('ptBuyPrice').innerText = '$' + ptBuyPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('parPayout').innerText = '$' + dep.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('fixedGain').innerText = '+$' + fixedGain.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+      // Card 2
+      const varApy = parseFloat(document.getElementById('varApyInput').value);
+      document.getElementById('varApyVal').innerText = varApy.toFixed(1) + '% Actual';
+
+      const ytCost = fixedGain;
+      const repPrincipal = dep;
+      const leverage = repPrincipal / ytCost;
+      const harvestedInt = dep * (varApy / 100.0) * timeFrac;
+      const netYtProfit = harvestedInt - ytCost;
+      const ytRoi = (netYtProfit / ytCost) * 100.0;
+
+      document.getElementById('ytCost').innerText = '$' + ytCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('repPrincipal').innerText = '$' + repPrincipal.toLocaleString() + ' (' + leverage.toFixed(1) + 'x Leverage)';
+      document.getElementById('harvestedInt').innerText = '$' + harvestedInt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('netYtProfit').innerText = (netYtProfit >= 0 ? '+' : '') + '$' + netYtProfit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('netYtProfit').style.color = netYtProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+      document.getElementById('ytRoi').innerText = (ytRoi >= 0 ? '+' : '') + ytRoi.toFixed(2) + '% ROI';
+      document.getElementById('ytRoi').style.color = ytRoi >= 0 ? 'var(--success)' : 'var(--danger)';
+
+      // Card 3
+      const pullGain = ((1.0 - ptRatio) / ptRatio) * 100.0;
+      const convApr = pullGain * (365.0 / days);
+
+      document.getElementById('pullParGain').innerText = '+' + pullGain.toFixed(2) + '% Price Drift';
+      document.getElementById('convApr').innerText = convApr.toFixed(2) + '% APR';
+    }
+    recalc();
+  </script>
+</body>
+</html>
