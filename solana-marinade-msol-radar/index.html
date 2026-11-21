@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solana Marinade Finance mSOL Fair NAV & Instant Unstake Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #080d19;
+      --card-bg: rgba(16, 26, 46, 0.75);
+      --border: rgba(45, 212, 191, 0.25);
+      --accent-teal: #2dd4bf;
+      --accent-cyan: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 15% 15%, rgba(45, 212, 191, 0.12), transparent 45%),
+                        radial-gradient(circle at 85% 85%, rgba(56, 189, 248, 0.12), transparent 45%);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+    .container { max-width: 1140px; width: 100%; }
+    header { text-align: center; margin-bottom: 32px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(45, 212, 191, 0.1);
+      border: 1px solid var(--border);
+      color: var(--accent-teal);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f8fafc 30%, #2dd4bf 70%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--accent-teal);
+    }
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    input[type="number"]:focus { border-color: var(--accent-teal); }
+    .metric-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--accent-teal);
+    }
+    .metric-val.green { color: var(--accent-green); }
+    .metric-val.amber { color: var(--accent-amber); }
+    .metric-val.red { color: var(--accent-red); }
+    .metric-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+    }
+    .status-pill.green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.4); }
+    .status-pill.amber { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status-pill.red { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
+    
+    .pay-card {
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.12) 0%, rgba(56, 189, 248, 0.12) 100%);
+      border: 1px solid rgba(45, 212, 191, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .wallet-btn {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .wallet-btn:hover {
+      background: rgba(45, 212, 191, 0.2);
+      border-color: var(--accent-teal);
+    }
+    footer {
+      margin-top: 32px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">SOLANA DEFI ENGINE • MARINADE FINANCE</div>
+      <h1>Marinade mSOL Fair NAV & Instant Unstake Radar</h1>
+      <p class="subtitle">On-chain true Fair NAV backing vs secondary DEX market discount arbitrage, delayed unstake risk-free yields, and instant pool fee curves.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Input Controls -->
+      <div class="card">
+        <h2>⚡ mSOL & Staking Parameters</h2>
+        <div class="form-group">
+          <label>mSOL Arbitrage Volume</label>
+          <input type="number" id="msolAmount" value="100" step="10" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>mSOL True Fair NAV (in SOL)</label>
+            <input type="number" id="fairNav" value="1.2450" step="0.001" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>mSOL Market Price (in SOL)</label>
+            <input type="number" id="marketPrice" value="1.2280" step="0.001" oninput="updateCalculations()">
+          </div>
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>Epoch Duration (Days)</label>
+            <input type="number" id="epochDays" value="2.5" step="0.5" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>Instant Pool Available (SOL)</label>
+            <input type="number" id="poolAvailable" value="45000" step="5000" oninput="updateCalculations()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Instant Unstake Target (SOL)</label>
+          <input type="number" id="poolTarget" value="100000" step="10000" oninput="updateCalculations()">
+        </div>
+      </div>
+
+      <!-- Live Analytics -->
+      <div class="card">
+        <h2>📊 Real-Time Arbitrage & Fees</h2>
+        <div class="metric-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Fair NAV Discount Arbitrage</span>
+            <span id="navPill" class="status-pill green">HIGH CONVICTION ARB</span>
+          </div>
+          <div class="metric-val green" id="netProfitDisplay">+1.65 SOL ($296.91)</div>
+          <div class="metric-sub" id="roiDetail">Annualized ROI: 19.61% risk-free carry over 2.5-day epoch</div>
+        </div>
+
+        <div class="metric-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; color:var(--text-muted);">mSOL Market Discount</span>
+            <span class="status-pill green">DISCOUNT SPREAD</span>
+          </div>
+          <div class="metric-val" id="discountDisplay">1.37% Discount</div>
+          <div class="metric-sub" id="costDetail">Cost: 122.80 SOL to redeem 124.50 SOL at epoch end</div>
+        </div>
+
+        <div class="metric-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Instant Unstake Pool Dynamic Fee</span>
+            <span id="feePill" class="status-pill amber">5.04% FEE</span>
+          </div>
+          <div class="metric-val amber" id="feeDisplay">5.04% Pool Fee</div>
+          <div class="metric-sub" id="routeRec">Recommendation: Route via Delayed Unstake (0% fee) to capture maximum profit.</div>
+        </div>
+
+        <div class="pay-card">
+          <h3 style="font-size:1.1rem; margin-bottom:6px;">🚀 Unlock Automated NAV Arbitrage Sweeper Bot</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Get instant WebSocket alerts when mSOL discount >1.0% and automated 1-click delayed redemption bots.</p>
+          <div style="font-size:0.82rem; font-weight:700; margin-bottom:6px;">5 Base USDC or 0.03 SOL</div>
+          <button class="wallet-btn" onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM')">
+            <span>Solana (SOL/USDC): DW2Md...SAM</span>
+            <span style="color:var(--accent-teal); font-weight:700;">COPY</span>
+          </button>
+          <button class="wallet-btn" onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01')">
+            <span>Base EVM (USDC): 0xF0E...3c01</span>
+            <span style="color:var(--accent-teal); font-weight:700;">COPY</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Marinade Finance Solana Analytics Engine • mSOL Fair NAV Backing & Unstake Arbitrage • Non-Custodial Infrastructure
+    </footer>
+  </div>
+
+  <script>
+    function updateCalculations() {
+      const amount = parseFloat(document.getElementById('msolAmount').value) || 0;
+      const nav = parseFloat(document.getElementById('fairNav').value) || 1;
+      const price = parseFloat(document.getElementById('marketPrice').value) || 1;
+      const days = parseFloat(document.getElementById('epochDays').value) || 2.5;
+      const avail = parseFloat(document.getElementById('poolAvailable').value) || 1;
+      const target = parseFloat(document.getElementById('poolTarget').value) || 1;
+      const solPrice = 180.0;
+
+      const discount = nav > 0 ? ((nav - price) / nav) * 100 : 0;
+      const costSol = amount * price;
+      const grossSol = amount * nav;
+      const grossProfit = grossSol - costSol;
+
+      const oppCost = costSol * 0.06 * (days / 365);
+      const netProfitSol = Math.max(0, grossProfit - oppCost);
+      const netProfitUsd = netProfitSol * solPrice;
+      const annualRoi = costSol > 0 ? (netProfitSol / costSol) * (365 / days) * 100 : 0;
+
+      document.getElementById('discountDisplay').innerText = `${discount.toFixed(2)}% Discount`;
+      document.getElementById('costDetail').innerText = `Cost: ${costSol.toFixed(2)} SOL to redeem ${grossSol.toFixed(2)} SOL at epoch end`;
+
+      const navPill = document.getElementById('navPill');
+      const netProfitDisplay = document.getElementById('netProfitDisplay');
+      const roiDetail = document.getElementById('roiDetail');
+
+      netProfitDisplay.innerText = `+${netProfitSol.toFixed(2)} SOL ($${netProfitUsd.toFixed(2)})`;
+      roiDetail.innerText = `Annualized ROI: ${annualRoi.toFixed(2)}% risk-free carry over ${days}-day epoch`;
+
+      if (discount > 1.2 && annualRoi > 15) {
+        navPill.className = 'status-pill green';
+        navPill.innerText = 'HIGH CONVICTION ARB';
+        netProfitDisplay.className = 'metric-val green';
+      } else if (discount > 0.4) {
+        navPill.className = 'status-pill amber';
+        navPill.innerText = 'MODERATE CARRY';
+        netProfitDisplay.className = 'metric-val amber';
+      } else {
+        navPill.className = 'status-pill red';
+        navPill.innerText = 'TIGHT PARITY';
+        netProfitDisplay.className = 'metric-val red';
+      }
+
+      // Instant Unstake Pool Fee
+      const ratio = Math.min(avail / target, 1.0);
+      const dynamicFee = 9.0 - (9.0 - 0.1) * ratio;
+
+      const feePill = document.getElementById('feePill');
+      const feeDisplay = document.getElementById('feeDisplay');
+      const routeRec = document.getElementById('routeRec');
+
+      feeDisplay.innerText = `${dynamicFee.toFixed(2)}% Pool Fee`;
+      feePill.innerText = `${dynamicFee.toFixed(2)}% FEE`;
+
+      if (dynamicFee > 1.5) {
+        feePill.className = 'status-pill amber';
+        feeDisplay.className = 'metric-val amber';
+        routeRec.innerText = 'Recommendation: Route via Delayed Unstake (0% fee) to capture maximum profit.';
+      } else {
+        feePill.className = 'status-pill green';
+        feeDisplay.className = 'metric-val green';
+        routeRec.innerText = 'Instant Unstake Pool is Liquid: Immediate atomic conversion favorable.';
+      }
+    }
+
+    function copyWallet(addr) {
+      navigator.clipboard.writeText(addr);
+      alert('Wallet address copied to clipboard:\n' + addr);
+    }
+
+    window.onload = updateCalculations;
+  </script>
+</body>
+</html>
