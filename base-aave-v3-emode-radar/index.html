@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Aave v3 E-Mode Correlated Leverage & Ultra-Tight Liquidation Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #080c18;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --border: rgba(56, 189, 248, 0.25);
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.12), transparent 45%),
+                        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.12), transparent 45%);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+    .container { max-width: 1140px; width: 100%; }
+    header { text-align: center; margin-bottom: 32px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid var(--border);
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f8fafc 30%, #38bdf8 70%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--accent-cyan);
+    }
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .flex-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-cyan);
+      background: rgba(255, 255, 255, 0.1);
+      height: 6px;
+      border-radius: 4px;
+      outline: none;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    input[type="number"]:focus { border-color: var(--accent-cyan); }
+    .metric-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+    .metric-val.green { color: var(--accent-green); }
+    .metric-val.amber { color: var(--accent-amber); }
+    .metric-val.red { color: var(--accent-red); }
+    .metric-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+    }
+    .status-pill.green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.4); }
+    .status-pill.amber { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status-pill.red { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
+    
+    .pay-card {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .wallet-btn {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .wallet-btn:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent-cyan);
+    }
+    footer {
+      margin-top: 32px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">BASE DEFI ENGINE • AAVE V3 E-MODE</div>
+      <h1>Base Aave v3 E-Mode Correlated Leverage Radar</h1>
+      <p class="subtitle">High-precision simulation of Category 1 (ETH Correlated) 93% LTV looping yields, cbETH/wstETH depeg liquidation thresholds, and 1.0% ultra-tight liquidator economics.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Controls -->
+      <div class="card">
+        <h2>⚡ E-Mode Position Parameters</h2>
+        <div class="form-group">
+          <label>Initial Collateral Deposit (ETH)</label>
+          <input type="number" id="depositEth" value="10" step="1" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group">
+          <div class="flex-row">
+            <label>Looping Leverage Multiplier (Max 14x in E-Mode)</label>
+            <span id="levVal" style="font-family:'JetBrains Mono'; color:var(--accent-cyan); font-weight:700;">10.0x</span>
+          </div>
+          <input type="range" id="levRange" min="1.0" max="14.0" step="0.2" value="10.0" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>LST Staking APR (%)</label>
+            <input type="number" id="stakingYield" value="3.60" step="0.1" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>WETH Borrow APR (%)</label>
+            <input type="number" id="borrowApr" value="2.10" step="0.1" oninput="updateCalculations()">
+          </div>
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>LST / ETH Exchange Ratio</label>
+            <input type="number" id="ratioVal" value="1.000" step="0.002" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>ETH Spot Price ($ USD)</label>
+            <input type="number" id="ethPrice" value="3200" step="50" oninput="updateCalculations()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Metrics -->
+      <div class="card">
+        <h2>📊 Real-Time Analytics & Liquidations</h2>
+        <div class="metric-box">
+          <div class="flex-row">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Net Looped Staking APY</span>
+            <span class="status-pill green">EMODE BOOST</span>
+          </div>
+          <div class="metric-val green" id="netApyDisplay">17.10% Net APY</div>
+          <div class="metric-sub" id="carryBreakdown">100 ETH Col @ 3.6% vs 90 ETH Debt @ 2.1% (+1.71 ETH / $5,472/yr)</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="flex-row">
+            <span style="font-size:0.85rem; color:var(--text-muted);">E-Mode Health Factor & Depeg Barrier</span>
+            <span id="hfPill" class="status-pill green">HEALTHY</span>
+          </div>
+          <div class="metric-val" id="hfDisplay">1.0556 HF</div>
+          <div class="metric-sub" id="depegBuffer">Tolerates 5.26% depeg (Liquidation ratio: 0.9474 cbETH/ETH)</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="flex-row">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Ultra-Tight Liquidator Net Profit (1.0% Bonus)</span>
+            <span class="status-pill green">TIGHT ARB</span>
+          </div>
+          <div class="metric-val green" id="liqProfitDisplay">$542.69 Net Profit</div>
+          <div class="metric-sub" id="liqDetail">Repaying 20 ETH ($64,000) with $0.35 Base gas and 0.15% DEX slippage</div>
+        </div>
+
+        <div class="pay-card">
+          <h3 style="font-size:1.1rem; margin-bottom:6px;">🚀 Unlock Automated E-Mode Depeg & Liquidator Bot</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Get instant WebSocket alerts when cbETH/wstETH drifts <2% from liquidation barrier and automated tight-margin flash-liquidator scripts.</p>
+          <div style="font-size:0.82rem; font-weight:700; margin-bottom:6px;">5 Base USDC or 0.03 SOL</div>
+          <button class="wallet-btn" onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01')">
+            <span>Base EVM (USDC): 0xF0E...3c01</span>
+            <span style="color:var(--accent-cyan); font-weight:700;">COPY</span>
+          </button>
+          <button class="wallet-btn" onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM')">
+            <span>Solana (SOL/USDC): DW2Md...SAM</span>
+            <span style="color:var(--accent-cyan); font-weight:700;">COPY</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Aave v3 Base E-Mode Analytics Engine • Correlated Collateral Optimization • Non-Custodial Real-Money Systems
+    </footer>
+  </div>
+
+  <script>
+    function updateCalculations() {
+      const deposit = parseFloat(document.getElementById('depositEth').value) || 0;
+      const lev = parseFloat(document.getElementById('levRange').value) || 1;
+      const stakingYield = parseFloat(document.getElementById('stakingYield').value) || 0;
+      const borrowApr = parseFloat(document.getElementById('borrowApr').value) || 0;
+      const ratio = parseFloat(document.getElementById('ratioVal').value) || 1;
+      const ethPrice = parseFloat(document.getElementById('ethPrice').value) || 3200;
+
+      document.getElementById('levVal').innerText = `${lev.toFixed(1)}x`;
+
+      const totalCol = deposit * lev;
+      const debt = totalCol - deposit;
+
+      const grossEarn = totalCol * (stakingYield / 100);
+      const borrowCost = debt * (borrowApr / 100);
+      const netEarnEth = grossEarn - borrowCost;
+      const netApy = deposit > 0 ? (netEarnEth / deposit) * 100 : 0;
+      const annualUsd = netEarnEth * ethPrice;
+
+      document.getElementById('netApyDisplay').innerText = `${netApy.toFixed(2)}% Net APY`;
+      document.getElementById('carryBreakdown').innerText = `${totalCol.toFixed(1)} ETH Col @ ${stakingYield}% vs ${debt.toFixed(1)} ETH Debt @ ${borrowApr}% (+${netEarnEth.toFixed(2)} ETH / $${annualUsd.toLocaleString()}/yr)`;
+
+      // Health factor in E-Mode (95% LT)
+      const hf = debt > 0 ? ((totalCol * ratio * 0.95) / debt) : 999;
+      const debtRatio = (lev - 1) / lev;
+      const liqRatio = lev > 1 ? (debtRatio / 0.95) : 0;
+      const tolerableDepeg = ratio > 0 ? ((ratio - liqRatio) / ratio) * 100 : 0;
+
+      const hfDisplay = document.getElementById('hfDisplay');
+      const hfPill = document.getElementById('hfPill');
+      const depegBuffer = document.getElementById('depegBuffer');
+
+      hfDisplay.innerText = hf >= 999 ? '∞ (No Debt)' : `${hf.toFixed(4)} HF`;
+      depegBuffer.innerText = `Tolerates ${tolerableDepeg.toFixed(2)}% depeg (Liquidation ratio: ${liqRatio.toFixed(4)} cbETH/ETH)`;
+
+      if (hf >= 1.05) {
+        hfDisplay.className = 'metric-val green';
+        hfPill.className = 'status-pill green';
+        hfPill.innerText = 'HEALTHY';
+      } else if (hf >= 1.0) {
+        hfDisplay.className = 'metric-val amber';
+        hfPill.className = 'status-pill amber';
+        hfPill.innerText = 'TIGHT BUFFER';
+      } else {
+        hfDisplay.className = 'metric-val red';
+        hfPill.className = 'status-pill red';
+        hfPill.innerText = 'LIQUIDATABLE';
+      }
+
+      // Liquidator profit on 20 ETH repay
+      const repayVal = 20 * ethPrice;
+      const grossBonus = repayVal * 0.01;
+      const slippage = (repayVal * 1.01) * 0.0015;
+      const netProfit = grossBonus - slippage - 0.35;
+
+      document.getElementById('liqProfitDisplay').innerText = `$${netProfit.toFixed(2)} Net Profit`;
+      document.getElementById('liqDetail').innerText = `Repaying 20 ETH ($${repayVal.toLocaleString()}) with $0.35 Base gas and 0.15% DEX slippage`;
+    }
+
+    function copyWallet(addr) {
+      navigator.clipboard.writeText(addr);
+      alert('Wallet address copied to clipboard:\n' + addr);
+    }
+
+    window.onload = updateCalculations;
+  </script>
+</body>
+</html>
