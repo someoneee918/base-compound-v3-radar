@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solana UXD Protocol Delta-Neutral Stablecoin & Basis Funding Carry Radar</title>
+  <style>
+    :root {
+      --bg-dark: #090e1a;
+      --card-bg: #111a2f;
+      --border: #1e293b;
+      --accent-sol: #14f195;
+      --accent-glow: rgba(20, 241, 149, 0.2);
+      --accent-purple: #9945ff;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; padding: 24px 16px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
+    .badge { display: inline-block; background: var(--accent-glow); color: var(--accent-sol); border: 1px solid var(--accent-sol); padding: 4px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; }
+    h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em; }
+    p.lead { color: var(--text-muted); font-size: 1.05rem; max-width: 780px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 32px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; position: relative; }
+    .card h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+    .metric-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); }
+    .metric-label { color: var(--text-muted); font-size: 0.9rem; }
+    .metric-value { font-weight: 700; font-size: 1.05rem; font-family: monospace; }
+    .val-sol { color: var(--accent-sol); }
+    .val-purple { color: #c084fc; }
+    .val-warn { color: var(--warn); }
+    .val-danger { color: var(--danger); }
+    .slider-group { margin-bottom: 16px; }
+    .slider-group label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+    input[type=range] { width: 100%; accent-color: var(--accent-sol); background: #1e293b; height: 6px; border-radius: 4px; }
+    .vip-box { background: linear-gradient(145deg, #101a2e, #0a1120); border: 1px solid var(--accent-sol); border-radius: 12px; padding: 24px; text-align: center; margin-top: 24px; }
+    .vip-box h3 { font-size: 1.3rem; margin-bottom: 10px; color: var(--accent-sol); }
+    .wallet-addr { background: #080c14; padding: 8px 12px; border-radius: 6px; font-family: monospace; font-size: 0.85rem; border: 1px solid #1e293b; word-break: break-all; margin: 8px 0; display: inline-block; }
+    button.btn { background: var(--accent-sol); color: #090e1a; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 12px; }
+    button.btn:hover { background: #00ff88; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Solana Mainnet • UXD Protocol • Delta-Neutral Stablecoin</div>
+      <h1>Delta-Neutral Stablecoin & Basis Funding Carry Radar</h1>
+      <p class="lead">Quantitative simulation and risk management engine for UXD Protocol algorithmic delta-neutral stablecoin minting, perpetual swap funding rate harvest carry, insurance fund negative funding runway, and DEX peg arbitrage on Solana.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Card 1: Delta-Neutral Funding Rate Carry -->
+      <div class="card">
+        <h2>Perp Funding Rate Carry <span class="badge" style="margin:0;">Delta-Neutral</span></h2>
+        <div class="slider-group">
+          <label><span>Deposit Principal ($)</span><span id="depVal">$10,000</span></label>
+          <input type="range" id="depInput" min="1000" max="100000" step="1000" value="10000" oninput="recalc()">
+        </div>
+        <div class="slider-group">
+          <label><span>Perp Funding Rate APR (%)</span><span id="fundVal">18.50% APR</span></label>
+          <input type="range" id="fundInput" min="2" max="50" step="0.5" value="18.5" oninput="recalc()">
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">SOL Volatility Price Risk:</span>
+          <span class="metric-value val-sol">0.00% (1x Delta-Hedged)</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Gross Short Funding Revenue:</span>
+          <span class="metric-value val-purple" id="grossFund">$1,850.00 / yr</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Protocol Insurance Fund Cut (15%):</span>
+          <span class="metric-value val-warn" id="insCut">$277.50 / yr</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Net Staker Yield:</span>
+          <span class="metric-value val-sol" id="netYield">$1,572.50 / yr</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Net Staker APY:</span>
+          <span class="metric-value val-sol" id="netApy">15.73% Net APY</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Daily Cashflow:</span>
+          <span class="metric-value val-sol" id="dailyCash">+$4.31 / day</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Negative Funding Insurance Fund Runway -->
+      <div class="card">
+        <h2>Insurance Fund Runway <span class="badge" style="margin:0;">Bear Regime</span></h2>
+        <div class="slider-group">
+          <label><span>Negative Funding Rate (% Drag)</span><span id="negRateVal">5.00% Drag</span></label>
+          <input type="range" id="negRateInput" min="1" max="25" step="0.5" value="5" oninput="recalc()">
+        </div>
+        <div class="slider-group">
+          <label><span>Insurance Fund Balance ($)</span><span id="insBalVal">$250,000</span></label>
+          <input type="range" id="insBalInput" min="25000" max="1000000" step="25000" value="250000" oninput="recalc()">
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">UXD Supply Outstanding:</span>
+          <span class="metric-value val-purple">$5,000,000.00</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Daily Funding Burn Drag:</span>
+          <span class="metric-value val-warn" id="burnVal">$684.93 / day</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Solvency Runway Buffer:</span>
+          <span class="metric-value val-sol" id="runwayVal">365.0 Days</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Protocol Solvency Rating:</span>
+          <span class="metric-value val-sol" id="solvRating">SECURE (&gt; 180 Days)</span>
+        </div>
+      </div>
+
+      <!-- Card 3: DEX Peg Discount Arbitrage -->
+      <div class="card">
+        <h2>DEX Peg Arbitrage <span class="badge" style="margin:0;">1:1 Mint/Redeem</span></h2>
+        <div class="slider-group">
+          <label><span>Secondary UXD Price ($)</span><span id="pegPriceVal">$0.9850 (150 bps Discount)</span></label>
+          <input type="range" id="pegPriceInput" min="0.95" max="0.998" step="0.001" value="0.985" oninput="recalc()">
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Arbitrage Capital Deployed:</span>
+          <span class="metric-value val-purple">$10,000.00</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">UXD Tokens Acquired on DEX:</span>
+          <span class="metric-value val-sol" id="tokensAcq">10,152.28 UXD</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">On-Chain 1:1 Redemption Gross:</span>
+          <span class="metric-value val-sol" id="grossRedeem">$10,152.28</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">10 bps Redemption Fee + Gas:</span>
+          <span class="metric-value val-warn">$10.15</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Instant Atomic Arbitrage Profit:</span>
+          <span class="metric-value val-sol" id="arbProfit">+$142.13 (+1.42% ROI)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP License Section -->
+    <div class="vip-box">
+      <h3>Unlock UXD VIP Sentinel License</h3>
+      <p style="color:var(--text-muted); max-width:650px; margin:0 auto 12px;">Automated on-chain webhook alerts for perp funding rate inversions, insurance fund runway depletion, and secondary DEX peg discount arbitrage signals.</p>
+      <div style="margin: 12px 0;">
+        <div><strong>Base Receive Address (5 USDC):</strong></div>
+        <span class="wallet-addr">0xF0E0D361bBE899F3089f0a968506eF2B97693c01</span>
+      </div>
+      <div>
+        <div><strong>Solana Receive Address (0.03 SOL):</strong></div>
+        <span class="wallet-addr">DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM</span>
+      </div>
+      <button class="btn" onclick="alert('Send 5 Base USDC or 0.03 SOL to the receive addresses above. The on-chain daemon monitors RPCs and automatically grants VIP access.')">Activate VIP License</button>
+    </div>
+  </div>
+
+  <script>
+    function recalc() {
+      // Card 1
+      const dep = parseFloat(document.getElementById('depInput').value);
+      const fund = parseFloat(document.getElementById('fundInput').value);
+
+      document.getElementById('depVal').innerText = '$' + dep.toLocaleString();
+      document.getElementById('fundVal').innerText = fund.toFixed(2) + '% APR';
+
+      const grossFund = dep * (fund / 100.0);
+      const insCut = grossFund * 0.15;
+      const netYield = grossFund - insCut;
+      const netApy = (netYield / dep) * 100.0;
+      const dailyCash = netYield / 365.0;
+
+      document.getElementById('grossFund').innerText = '$' + grossFund.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' / yr';
+      document.getElementById('insCut').innerText = '$' + insCut.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' / yr';
+      document.getElementById('netYield').innerText = '$' + netYield.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' / yr';
+      document.getElementById('netApy').innerText = netApy.toFixed(2) + '% Net APY';
+      document.getElementById('dailyCash').innerText = '+$' + dailyCash.toFixed(2) + ' / day';
+
+      // Card 2
+      const negRate = parseFloat(document.getElementById('negRateInput').value);
+      const insBal = parseFloat(document.getElementById('insBalInput').value);
+
+      document.getElementById('negRateVal').innerText = negRate.toFixed(2) + '% Drag';
+      document.getElementById('insBalVal').innerText = '$' + insBal.toLocaleString();
+
+      const dailyBurn = (5000000.0 * (negRate / 100.0)) / 365.0;
+      const runwayDays = insBal / dailyBurn;
+
+      document.getElementById('burnVal').innerText = '$' + dailyBurn.toFixed(2) + ' / day';
+      document.getElementById('runwayVal').innerText = runwayDays.toFixed(1) + ' Days';
+      
+      const solvEl = document.getElementById('solvRating');
+      if (runwayDays >= 180) {
+        solvEl.innerText = 'SECURE (> 180 Days)';
+        solvEl.style.color = 'var(--accent-sol)';
+      } else if (runwayDays >= 60) {
+        solvEl.innerText = 'ADEQUATE (60-180 Days)';
+        solvEl.style.color = 'var(--warn)';
+      } else {
+        solvEl.innerText = 'HIGH RISK (< 60 Days)';
+        solvEl.style.color = 'var(--danger)';
+      }
+
+      // Card 3
+      const pegPrice = parseFloat(document.getElementById('pegPriceInput').value);
+      const discBps = ((1.0 - pegPrice) / 1.0) * 10000.0;
+      document.getElementById('pegPriceVal').innerText = '$' + pegPrice.toFixed(4) + ' (' + Math.round(discBps) + ' bps Discount)';
+
+      const tokensAcq = 10000.0 / pegPrice;
+      const grossRedeem = tokensAcq * 1.0;
+      const fee = grossRedeem * 0.001;
+      const netProc = grossRedeem - fee - 0.001;
+      const profit = netProc - 10000.0;
+      const roi = (profit / 10000.0) * 100.0;
+
+      document.getElementById('tokensAcq').innerText = tokensAcq.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' UXD';
+      document.getElementById('grossRedeem').innerText = '$' + grossRedeem.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('arbProfit').innerText = (profit >= 0 ? '+' : '') + '$' + profit.toFixed(2) + ' (' + (roi >= 0 ? '+' : '') + roi.toFixed(2) + '% ROI)';
+    }
+    recalc();
+  </script>
+</body>
+</html>
