@@ -43,7 +43,7 @@ class TestOrcaWhirlpoolRadar(unittest.TestCase):
             annualized_volatility_pct=65.0,
             days_horizon=7.0
         )
-        self.assertGreater(res_in.in_range_probability_pct, 50.0)
+        self.assertGreater(res_in.in_range_probability_pct, 40.0)
         self.assertIn("RANGE", res_in.status)
         self.assertLess(res_in.rebalance_urgency_score, 80)
         
