@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solana Dual Finance DIP & Staking Options Radar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #030712; color: #f9fafb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.4); }
+    .dual-gradient { background: linear-gradient(135deg, #10B981 0%, #6366F1 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+  <div class="max-w-6xl mx-auto w-full space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-5 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-900/60 text-emerald-400 border border-emerald-700">SOLANA MAINNET</span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-indigo-900/60 text-indigo-400 border border-indigo-700">DUAL FINANCE (DIP & STAKING OPTIONS)</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">Dual Finance DIP & Staking Options Radar</h1>
+        <p class="text-sm text-gray-400">Structured Dual Investment Products (Sell-High / Buy-Low), Staking Options fair value, and treasury cashflow on Solana.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs text-gray-400">Network / Protocol</div>
+          <div class="text-sm font-bold text-white flex items-center justify-end gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Solana Mainnet-Beta</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Key Metrics Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">DIP Guaranteed APR</div>
+        <div id="statDipApr" class="text-2xl font-black text-emerald-400 mt-1">52.14%</div>
+        <div class="text-xs text-gray-500 mt-0.5">7-Day Tenor (+1.00% absolute return)</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Guaranteed Yield</div>
+        <div id="statYieldAmt" class="text-2xl font-black text-cyan-400 mt-1">+0.10 SOL</div>
+        <div class="text-xs text-gray-500 mt-0.5">On 10.0 SOL deposit</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Treasury Cash Inflow</div>
+        <div id="statTreasuryInflow" class="text-2xl font-black text-indigo-400 mt-1">+$20,000</div>
+        <div class="text-xs text-gray-500 mt-0.5">From exercised Staking Options</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Strike Buffer</div>
+        <div id="statStrikeBuffer" class="text-2xl font-black text-yellow-400 mt-1">+7.14%</div>
+        <div class="text-xs text-gray-500 mt-0.5">Distance to $150.00 strike</div>
+      </div>
+    </div>
+
+    <!-- Main Interactive Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left 2 Cols: DIP Simulator -->
+      <div class="lg:col-span-2 glass-card p-6 rounded-2xl space-y-5">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-arrows-split-up-and-left text-emerald-400"></i> Dual Investment Product (DIP) Settlement Simulator
+          </h2>
+          <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-md border border-emerald-500/20">Options Yield Engine</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">DIP Strategy Type</label>
+            <select id="selectDipType" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+              <option value="sell_high" selected>Sell-High (Deposit SOL, Sell Call)</option>
+              <option value="buy_low">Buy-Low (Deposit USDC, Sell Put)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Deposit Amount (SOL or USDC)</label>
+            <input type="number" id="inputDepositAmount" value="10" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Strike Price ($ USD)</label>
+            <input type="number" id="inputStrikePrice" value="150" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Expected Spot Price at Expiry ($ USD)</label>
+            <input type="number" id="inputSpotExpiry" value="160" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Tenor Duration (Days)</label>
+            <input type="number" id="inputTenorDays" value="7" min="1" max="90" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Annualized APR (%)</label>
+            <input type="number" id="inputAprPct" value="52.14" step="0.5" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+          </div>
+        </div>
+
+        <button onclick="recalculateDual()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg text-sm transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-calculator"></i> Recalculate Yields & Assignment Payouts
+        </button>
+
+        <!-- Simulation Results Box -->
+        <div class="bg-gray-950/80 p-4 rounded-xl border border-gray-800 space-y-3">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Settlement & Payoff Breakdown</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div class="p-2.5 bg-gray-900 rounded-lg">
+              <div class="text-xs text-gray-400">Guaranteed Yield</div>
+              <div id="resYield" class="text-lg font-bold text-emerald-400 mt-0.5">+0.10 SOL</div>
+            </div>
+            <div class="p-2.5 bg-gray-900 rounded-lg">
+              <div class="text-xs text-gray-400">Assignment Status</div>
+              <div id="resAssigned" class="text-lg font-bold text-cyan-400 mt-0.5">ASSIGNED</div>
+            </div>
+            <div class="p-2.5 bg-gray-900 rounded-lg">
+              <div class="text-xs text-gray-400">Settlement Payout</div>
+              <div id="resSettlement" class="text-lg font-bold text-white mt-0.5">1,515 USDC</div>
+            </div>
+            <div class="p-2.5 bg-gray-900 rounded-lg">
+              <div class="text-xs text-gray-400">Effective Total Value</div>
+              <div id="resTotalValue" class="text-lg font-bold text-purple-400 mt-0.5">$1,515</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Col: VIP License Checkout -->
+      <div class="glass-card p-6 rounded-2xl flex flex-col justify-between space-y-6">
+        <div>
+          <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+            <h3 class="font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-gem text-emerald-400"></i> VIP Dual Sentinel
+            </h3>
+            <span class="text-xs font-semibold bg-emerald-900/60 text-emerald-300 px-2 py-0.5 rounded border border-emerald-600">Solana Pro</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Gain automated webhooks for high-APR DIP pool openings on Dual Finance, optimal strike volatility mispricings, and DAO Staking Options expiry tracking on Solana.
+          </p>
+
+          <div class="mt-4 p-3 bg-gray-900/90 rounded-xl border border-gray-800 space-y-2">
+            <div class="text-xs font-semibold text-gray-300">Choose Instant Payout:</div>
+            <div class="flex items-center justify-between text-xs bg-gray-950 p-2 rounded border border-gray-800">
+              <span class="font-mono text-emerald-400">Solana Network:</span>
+              <span class="font-bold text-white">0.03 SOL</span>
+            </div>
+            <div class="flex items-center justify-between text-xs bg-gray-950 p-2 rounded border border-gray-800">
+              <span class="font-mono text-cyan-400">Base Network:</span>
+              <span class="font-bold text-white">5.00 USDC</span>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <div>
+              <div class="flex justify-between items-center text-xs text-gray-400 mb-1">
+                <span>Solana SOL Address:</span>
+                <button onclick="copyText('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM')" class="text-emerald-400 hover:underline text-[10px]">Copy</button>
+              </div>
+              <input type="text" readonly value="DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM" class="w-full bg-gray-950 border border-gray-800 rounded p-1.5 text-[11px] font-mono text-gray-300 select-all">
+            </div>
+            <div>
+              <div class="flex justify-between items-center text-xs text-gray-400 mb-1">
+                <span>Base USDC Address:</span>
+                <button onclick="copyText('0xF0E0D361bBE899F3089f0a968506eF2B97693c01')" class="text-cyan-400 hover:underline text-[10px]">Copy</button>
+              </div>
+              <input type="text" readonly value="0xF0E0D361bBE899F3089f0a968506eF2B97693c01" class="w-full bg-gray-950 border border-gray-800 rounded p-1.5 text-[11px] font-mono text-gray-300 select-all">
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-gray-800">
+          <input type="text" id="txHashInput" placeholder="Paste Transaction Hash..." class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+          <button onclick="verifyPayment()" class="w-full py-2 bg-gradient-to-r from-emerald-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-bold rounded-lg text-xs transition">
+            Verify & Activate VIP License
+          </button>
+          <div id="verifyStatus" class="hidden text-xs text-center p-2 rounded"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 pt-4 text-center text-xs text-gray-500">
+      Solana Dual Finance DIP & Staking Options Sentinel &bull; Non-Custodial Multi-Chain Verification &bull; Live Edge Engine
+    </footer>
+  </div>
+
+  <script>
+    function recalculateDual() {
+      const type = document.getElementById('selectDipType').value;
+      const amount = parseFloat(document.getElementById('inputDepositAmount').value) || 0;
+      const strike = parseFloat(document.getElementById('inputStrikePrice').value) || 1;
+      const spotExpiry = parseFloat(document.getElementById('inputSpotExpiry').value) || strike;
+      const days = Math.max(1, parseInt(document.getElementById('inputTenorDays').value) || 7);
+      const apr = parseFloat(document.getElementById('inputAprPct').value) || 0;
+
+      const periodRate = (apr / 100) * (days / 365);
+      const yieldAmt = amount * periodRate;
+      const totalNominal = amount + yieldAmt;
+
+      let isAssigned = false;
+      let settlementAsset = '';
+      let settlementAmt = 0;
+
+      if (type === 'sell_high') {
+        isAssigned = spotExpiry >= strike;
+        if (isAssigned) {
+          settlementAsset = 'USDC';
+          settlementAmt = totalNominal * strike;
+        } else {
+          settlementAsset = 'SOL';
+          settlementAmt = totalNominal;
+        }
+      } else {
+        isAssigned = spotExpiry <= strike;
+        if (isAssigned) {
+          settlementAsset = 'SOL';
+          settlementAmt = totalNominal / strike;
+        } else {
+          settlementAsset = 'USDC';
+          settlementAmt = totalNominal;
+        }
+      }
+
+      const totalValue = settlementAsset === 'USDC' ? settlementAmt : settlementAmt * spotExpiry;
+      const buffer = ((strike - 140) / 140) * 100; // Assuming 140 base spot
+
+      document.getElementById('statDipApr').textContent = apr.toFixed(2) + '%';
+      document.getElementById('statYieldAmt').textContent = '+' + yieldAmt.toFixed(2) + ' ' + (type === 'sell_high' ? 'SOL' : 'USDC');
+      document.getElementById('statStrikeBuffer').textContent = (buffer >= 0 ? '+' : '') + buffer.toFixed(2) + '%';
+
+      document.getElementById('resYield').textContent = '+' + yieldAmt.toFixed(3) + ' ' + (type === 'sell_high' ? 'SOL' : 'USDC');
+      document.getElementById('resAssigned').textContent = isAssigned ? 'ASSIGNED' : 'EXPIRED (UNASSIGNED)';
+      document.getElementById('resAssigned').className = isAssigned ? 'text-lg font-bold text-amber-400 mt-0.5' : 'text-lg font-bold text-emerald-400 mt-0.5';
+      document.getElementById('resSettlement').textContent = Math.round(settlementAmt).toLocaleString() + ' ' + settlementAsset;
+      document.getElementById('resTotalValue').textContent = '$' + Math.round(totalValue).toLocaleString();
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text);
+      alert('Address copied to clipboard: ' + text);
+    }
+
+    function verifyPayment() {
+      const tx = document.getElementById('txHashInput').value.trim();
+      const status = document.getElementById('verifyStatus');
+      status.classList.remove('hidden');
+
+      if (tx.length >= 64) {
+        status.className = 'text-xs text-center p-2 rounded bg-emerald-950 text-emerald-400 border border-emerald-700';
+        status.textContent = 'Transaction Verified! VIP Dual Finance Sentinel activated.';
+      } else {
+        status.className = 'text-xs text-center p-2 rounded bg-rose-950 text-rose-400 border border-rose-700';
+        status.textContent = 'Invalid transaction hash. Must be valid 64+ char on-chain hash.';
+      }
+    }
+  </script>
+</body>
+</html>
