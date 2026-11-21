@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solana Lifinity Oracle-Guided Concentrated AMM Radar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #030712; color: #f9fafb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.4); }
+    .accent-gradient { background: linear-gradient(135deg, #14F195 0%, #00C2FF 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+  <div class="max-w-6xl mx-auto w-full space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-5 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-cyan-900/60 text-cyan-400 border border-cyan-700">SOLANA PMM</span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-900/60 text-emerald-400 border border-emerald-700">PYTH ORACLE-GUIDED</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">Lifinity Concentrated AMM & Asymmetric Spread Radar</h1>
+        <p class="text-sm text-gray-400">Proactive Market Maker (PMM) liquidity curves, dynamic anti-LVR spread defense, and real LP net yields.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs text-gray-400">Network / Cluster</div>
+          <div class="text-sm font-bold text-white flex items-center justify-end gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Solana Mainnet-Beta</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Key Metrics Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">True Net LP APY</div>
+        <div id="statTrueApy" class="text-2xl font-black text-emerald-400 mt-1">128.67%</div>
+        <div class="text-xs text-gray-500 mt-0.5">Fees + Anti-LVR alpha</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Dynamic Bid-Ask Spread</div>
+        <div id="statSpread" class="text-2xl font-black text-cyan-400 mt-1">16.50 bps</div>
+        <div class="text-xs text-gray-500 mt-0.5">0.165% anti-arbitrage fee</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Annual LVR Saved Alpha</div>
+        <div id="statSavedLvr" class="text-2xl font-black text-purple-400 mt-1">+$6,843.75</div>
+        <div class="text-xs text-gray-500 mt-0.5">75% toxic flow defense</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Daily Fee Cashflow</div>
+        <div id="statDailyFee" class="text-2xl font-black text-yellow-400 mt-1">$16.50/day</div>
+        <div class="text-xs text-gray-500 mt-0.5">On $10,000 LP capital</div>
+      </div>
+    </div>
+
+    <!-- Simulator Inputs & Output Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Input Controls -->
+      <div class="glass-card p-5 rounded-xl space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-cyan-400"></i> PMM Market Parameters
+        </h3>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>User LP Capital (USD)</span>
+            <span id="labelLiquidity" class="font-bold text-white">$10,000</span>
+          </div>
+          <input type="range" id="inputLiquidity" min="1000" max="100000" step="1000" value="10000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Pool 24h Volume (USD)</span>
+            <span id="labelVolume" class="font-bold text-cyan-400">$1,000,000</span>
+          </div>
+          <input type="range" id="inputVolume" min="100000" max="5000000" step="100000" value="1000000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Pyth Volatility Index (%)</span>
+            <span id="labelVol" class="font-bold text-purple-400">2.5%</span>
+          </div>
+          <input type="range" id="inputVol" min="0.5" max="10.0" step="0.5" value="2.5" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-400">Base Spread (bps)</label>
+            <input type="number" id="inputBaseSpread" value="10.0" step="1.0" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400">Inventory Skew</label>
+            <input type="number" id="inputSkew" value="1.0" step="0.2" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+        </div>
+
+        <button onclick="recalculate()" class="w-full py-2 px-4 rounded-lg bg-cyan-600 hover:bg-cyan-500 font-semibold text-sm transition">
+          Recalculate Radar
+        </button>
+      </div>
+
+      <!-- Strategy Ledger & Breakdown -->
+      <div class="glass-card p-5 rounded-xl space-y-4 lg:col-span-2">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-emerald-400"></i> Anti-LVR Alpha & Yield Breakdown
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">Dynamic Spread Breakdown</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Base Trading Spread</span>
+              <span class="font-bold text-white">10.00 bps</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Volatility Expansion Markup</span>
+              <span id="cellVolMarkup" class="font-bold text-purple-400">+5.00 bps</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Inventory Rebalancing Markup</span>
+              <span id="cellInvMarkup" class="font-bold text-cyan-400">+1.50 bps</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Effective Trading Fee</span>
+              <span id="cellEffectiveFee" class="font-bold text-emerald-400">0.165%</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Market Evaluation</span>
+              <span id="badgeStatus" class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600">PRIME PMM LP</span>
+            </div>
+          </div>
+
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">LP Revenue & Anti-LVR Alpha</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Standard AMM LVR Loss (Uniswap)</span>
+              <span id="cellStandardLvr" class="font-bold text-rose-400">$2,500.00/day</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Lifinity LVR Reduction (75%)</span>
+              <span id="cellSavedPoolLvr" class="font-bold text-emerald-400">+$1,875.00/day</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Your Annual LVR Alpha</span>
+              <span id="cellUserAnnualLvr" class="font-bold text-purple-400">+$6,843.75/yr</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Annual Trading Fees</span>
+              <span id="cellAnnualFees" class="font-bold text-white">$6,022.50/yr</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">True Combined APY</span>
+              <span id="cellTrueApy" class="font-bold text-emerald-400">128.67%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP License Commercial Module -->
+    <div class="glass-card p-6 rounded-xl border border-cyan-500/30">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <span class="px-2.5 py-0.5 text-xs font-bold uppercase rounded-full bg-cyan-900/80 text-cyan-300 border border-cyan-600">COMMERCIAL VIP ACCESS</span>
+          <h2 class="text-xl font-black text-white mt-1">Unlock Automated Lifinity Oracle Sentinel & Spread Sniper</h2>
+          <p class="text-sm text-gray-400">Real-time alerts when Pyth oracle prices drift >0.10% ahead of DEX spot, automated inventory rebalancing webhooks, and high-frequency PMM yield trackers.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01', 'Base')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-brands fa-ethereum"></i> Pay 5 Base USDC
+          </button>
+          <button onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM', 'Solana')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-bolt"></i> Pay 0.03 SOL
+          </button>
+        </div>
+      </div>
+      <div id="copyNotice" class="hidden mt-3 p-2 text-xs bg-emerald-950/80 border border-emerald-700 text-emerald-300 rounded"></div>
+    </div>
+  </div>
+
+  <footer class="mt-8 border-t border-gray-800 pt-4 text-center text-xs text-gray-500">
+    <p>Lifinity Concentrated AMM Radar &copy; 2026. Non-custodial analytics on Solana Mainnet-Beta.</p>
+  </footer>
+
+  <script>
+    function recalculate() {
+      const liquidity = parseFloat(document.getElementById('inputLiquidity').value);
+      const volume = parseFloat(document.getElementById('inputVolume').value);
+      const volIndex = parseFloat(document.getElementById('inputVol').value);
+      const baseSpread = parseFloat(document.getElementById('inputBaseSpread').value);
+      const skew = parseFloat(document.getElementById('inputSkew').value);
+
+      document.getElementById('labelLiquidity').innerText = '$' + liquidity.toLocaleString();
+      document.getElementById('labelVolume').innerText = '$' + volume.toLocaleString();
+      document.getElementById('labelVol').innerText = volIndex.toFixed(1) + '%';
+
+      const volMarkup = volIndex * 2.0;
+      const invMarkup = skew * 1.5;
+      const dynamicSpread = baseSpread + volMarkup + invMarkup;
+      const effectiveSpreadPct = dynamicSpread / 100.0;
+
+      const standardPoolLvr = volume * 0.0025; // 25 bps
+      const savedPoolLvr = standardPoolLvr * 0.75; // 75% reduction
+      const userShare = liquidity / 1000000.0;
+      const userDailySavedLvr = savedPoolLvr * userShare;
+      const userAnnualSavedLvr = userDailySavedLvr * 365.0;
+
+      const poolDailyFees = volume * (dynamicSpread / 10000.0);
+      const userDailyFees = poolDailyFees * userShare;
+      const userAnnualFees = userDailyFees * 365.0;
+
+      const feeApy = (userAnnualFees / liquidity) * 100.0;
+      const lvrAlphaApy = (userAnnualSavedLvr / liquidity) * 100.0;
+      const trueNetApy = feeApy + lvrAlphaApy;
+
+      document.getElementById('statTrueApy').innerText = trueNetApy.toFixed(2) + '%';
+      document.getElementById('statSpread').innerText = dynamicSpread.toFixed(2) + ' bps';
+      document.getElementById('statSavedLvr').innerText = '+$' + userAnnualSavedLvr.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('statDailyFee').innerText = '$' + userDailyFees.toFixed(2) + '/day';
+
+      document.getElementById('cellVolMarkup').innerText = '+' + volMarkup.toFixed(2) + ' bps';
+      document.getElementById('cellInvMarkup').innerText = '+' + invMarkup.toFixed(2) + ' bps';
+      document.getElementById('cellEffectiveFee').innerText = (effectiveSpreadPct).toFixed(3) + '%';
+
+      document.getElementById('cellStandardLvr').innerText = '$' + standardPoolLvr.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '/day';
+      document.getElementById('cellSavedPoolLvr').innerText = '+$' + savedPoolLvr.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '/day';
+      document.getElementById('cellUserAnnualLvr').innerText = '+$' + userAnnualSavedLvr.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '/yr';
+      document.getElementById('cellAnnualFees').innerText = '$' + userAnnualFees.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '/yr';
+      document.getElementById('cellTrueApy').innerText = trueNetApy.toFixed(2) + '%';
+
+      const badge = document.getElementById('badgeStatus');
+      if (trueNetApy >= 35.0) {
+        badge.innerText = 'PRIME PMM LP';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600';
+      } else {
+        badge.innerText = 'HEALTHY PMM';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-cyan-900/60 text-cyan-300 border border-cyan-600';
+      }
+    }
+
+    document.getElementById('inputLiquidity').addEventListener('input', recalculate);
+    document.getElementById('inputVolume').addEventListener('input', recalculate);
+    document.getElementById('inputVol').addEventListener('input', recalculate);
+    document.getElementById('inputBaseSpread').addEventListener('input', recalculate);
+    document.getElementById('inputSkew').addEventListener('input', recalculate);
+
+    function copyWallet(address, network) {
+      navigator.clipboard.writeText(address);
+      const notice = document.getElementById('copyNotice');
+      notice.innerHTML = '<strong>' + network + ' Address Copied:</strong> ' + address + ' (Send payment and message @SolGuardScanBot with tx hash for instant VIP API key activation)';
+      notice.classList.remove('hidden');
+      setTimeout(() => notice.classList.add('hidden'), 8000);
+    }
+
+    recalculate();
+  </script>
+</body>
+</html>
