@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Moonwell Flagship Multi-Asset Lending & Safety Module Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0e1a;
+      --card-bg: rgba(18, 26, 44, 0.75);
+      --border: rgba(14, 165, 233, 0.2);
+      --accent-cyan: #38bdf8;
+      --accent-blue: #2563eb;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.12), transparent 45%),
+                        radial-gradient(circle at 90% 80%, rgba(37, 99, 235, 0.12), transparent 45%);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+    .container { max-width: 1140px; width: 100%; }
+    header { text-align: center; margin-bottom: 32px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(14, 165, 233, 0.1);
+      border: 1px solid var(--border);
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f8fafc 30%, #38bdf8 70%, #2563eb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--accent-cyan);
+    }
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    input[type="number"]:focus { border-color: var(--accent-cyan); }
+    .metric-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+    .metric-val.green { color: var(--accent-green); }
+    .metric-val.amber { color: var(--accent-amber); }
+    .metric-val.red { color: var(--accent-red); }
+    .metric-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+    }
+    .status-pill.green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.4); }
+    .status-pill.amber { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status-pill.red { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
+    
+    .pay-card {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%);
+      border: 1px solid rgba(14, 165, 233, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .wallet-btn {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .wallet-btn:hover {
+      background: rgba(14, 165, 233, 0.2);
+      border-color: var(--accent-cyan);
+    }
+    footer {
+      margin-top: 32px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">BASE DEFI ENGINE • MOONWELL PROTOCOL</div>
+      <h1>Base Moonwell Flagship Lending & Safety Module Radar</h1>
+      <p class="subtitle">Multi-asset cross-collateral health factor modeling, stkWELL Safety Module bad debt shortfall analysis, and liquidator seizure economics.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Input Controls -->
+      <div class="card">
+        <h2>🛡️ Position & Protocol Parameters</h2>
+        <div class="form-group">
+          <label>WETH Collateral ($ USD • 80% CF)</label>
+          <input type="number" id="wethCol" value="25000" step="1000" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group">
+          <label>cbBTC Collateral ($ USD • 75% CF)</label>
+          <input type="number" id="cbbtcCol" value="35000" step="1000" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group">
+          <label>cbETH Collateral ($ USD • 78% CF)</label>
+          <input type="number" id="cbethCol" value="15000" step="1000" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group">
+          <label>Total Borrowed Debt ($ USD • USDC/EURC)</label>
+          <input type="number" id="borrowDebt" value="45000" step="1000" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>stkWELL Staked ($ USD)</label>
+            <input type="number" id="stkwellStaked" value="10000" step="500" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>Protocol Bad Debt ($ USD)</label>
+            <input type="number" id="badDebt" value="75000" step="5000" oninput="updateCalculations()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Analytics -->
+      <div class="card">
+        <h2>📊 Real-Time Health & Profit Metrics</h2>
+        <div class="metric-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Composite Health Factor</span>
+            <span id="hfPill" class="status-pill green">SAFE</span>
+          </div>
+          <div class="metric-val green" id="hfDisplay">1.288</div>
+          <div class="metric-sub" id="cushionDisplay">Borrow capacity: $57,950 | Cushion: +$12,950 until liquidation</div>
+        </div>
+
+        <div class="metric-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Liquidator Seizure Opportunity</span>
+            <span class="status-pill green">8.0% INCENTIVE</span>
+          </div>
+          <div class="metric-val green" id="liqProfitDisplay">$1,799.55 Net Profit</div>
+          <div class="metric-sub" id="liqDetail">Repaying 50% ($22,500) seizes $24,300 collateral (Gas: $0.45)</div>
+        </div>
+
+        <div class="metric-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Safety Module Slashing Risk</span>
+            <span id="safetyPill" class="status-pill green">LOW RISK</span>
+          </div>
+          <div class="metric-val" id="netStakingApr">17.75% Net APR</div>
+          <div class="metric-sub" id="slashingDetail">Base 18.5% APR minus 0.75% shortfall exposure ($75.00)</div>
+        </div>
+
+        <div class="pay-card">
+          <h3 style="font-size:1.1rem; margin-bottom:6px;">🚀 Unlock Automated Keeper & Slashing Webhooks</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Get instant alerts on accounts reaching HF < 1.05 and automated flashloan liquidation payloads.</p>
+          <div style="font-size:0.82rem; font-weight:700; margin-bottom:6px;">5 Base USDC or 0.03 SOL</div>
+          <button class="wallet-btn" onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01')">
+            <span>Base EVM (USDC): 0xF0E...3c01</span>
+            <span style="color:var(--accent-cyan); font-weight:700;">COPY</span>
+          </button>
+          <button class="wallet-btn" onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM')">
+            <span>Solana (SOL/USDC): DW2Md...SAM</span>
+            <span style="color:var(--accent-cyan); font-weight:700;">COPY</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Moonwell Protocol Base Analytics Engine • Multi-Asset Collateral Risk • Non-Custodial Real-Money Infrastructure
+    </footer>
+  </div>
+
+  <script>
+    function updateCalculations() {
+      const weth = parseFloat(document.getElementById('wethCol').value) || 0;
+      const cbbtc = parseFloat(document.getElementById('cbbtcCol').value) || 0;
+      const cbeth = parseFloat(document.getElementById('cbethCol').value) || 0;
+      const debt = parseFloat(document.getElementById('borrowDebt').value) || 0;
+      const stkwell = parseFloat(document.getElementById('stkwellStaked').value) || 0;
+      const badDebt = parseFloat(document.getElementById('badDebt').value) || 0;
+
+      const capacity = (weth * 0.80) + (cbbtc * 0.75) + (cbeth * 0.78);
+      const cushion = capacity - debt;
+      const hf = debt > 0 ? (capacity / debt) : 999;
+
+      const hfDisplay = document.getElementById('hfDisplay');
+      const hfPill = document.getElementById('hfPill');
+      const cushionDisplay = document.getElementById('cushionDisplay');
+
+      if (hf >= 1.5) {
+        hfDisplay.className = 'metric-val green';
+        hfPill.className = 'status-pill green';
+        hfPill.innerText = 'SAFE';
+      } else if (hf >= 1.1) {
+        hfDisplay.className = 'metric-val amber';
+        hfPill.className = 'status-pill amber';
+        hfPill.innerText = 'MODERATE RISK';
+      } else if (hf >= 1.0) {
+        hfDisplay.className = 'metric-val amber';
+        hfPill.className = 'status-pill amber';
+        hfPill.innerText = 'NEAR LIQUIDATION';
+      } else {
+        hfDisplay.className = 'metric-val red';
+        hfPill.className = 'status-pill red';
+        hfPill.innerText = 'LIQUIDATABLE';
+      }
+
+      hfDisplay.innerText = hf >= 999 ? '∞ (Zero Debt)' : hf.toFixed(3);
+      cushionDisplay.innerText = `Borrow capacity: $${capacity.toLocaleString()} | Cushion: ${cushion >= 0 ? '+' : ''}$${cushion.toLocaleString()}`;
+
+      // Liquidator profit
+      const repay = debt * 0.50;
+      const seized = repay * 1.08;
+      const gross = seized - repay;
+      const net = gross - 0.45;
+
+      document.getElementById('liqProfitDisplay').innerText = `$${net.toFixed(2)} Net Profit`;
+      document.getElementById('liqDetail').innerText = `Repaying 50% ($${repay.toLocaleString()}) seizes $${seized.toLocaleString()} (Gas: $0.45)`;
+
+      // Safety Module
+      const totalSafetyModule = 1000000;
+      const userShare = stkwell / totalSafetyModule;
+      const userBadDebt = Math.min(badDebt * userShare, stkwell * 0.30);
+      const lossPct = stkwell > 0 ? (userBadDebt / stkwell) * 100 : 0;
+      const netApr = Math.max(0, 18.5 - lossPct);
+
+      document.getElementById('netStakingApr').innerText = `${netApr.toFixed(2)}% Net APR`;
+      document.getElementById('slashingDetail').innerText = `Base 18.5% APR minus ${lossPct.toFixed(2)}% shortfall risk ($${userBadDebt.toFixed(2)})`;
+    }
+
+    function copyWallet(addr) {
+      navigator.clipboard.writeText(addr);
+      alert('Wallet address copied to clipboard:\n' + addr);
+    }
+
+    window.onload = updateCalculations;
+  </script>
+</body>
+</html>
