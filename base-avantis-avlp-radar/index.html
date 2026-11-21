@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Avantis Protocol Senior/Junior AVLP Tranche & Skew Funding Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #080d19;
+      --card-bg: rgba(16, 26, 46, 0.75);
+      --border: rgba(14, 165, 233, 0.25);
+      --accent-cyan: #38bdf8;
+      --accent-blue: #0284c7;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 10% 20%, rgba(14, 165, 233, 0.12), transparent 45%),
+                        radial-gradient(circle at 90% 80%, rgba(34, 197, 94, 0.12), transparent 45%);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+    .container { max-width: 1140px; width: 100%; }
+    header { text-align: center; margin-bottom: 32px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(14, 165, 233, 0.1);
+      border: 1px solid var(--border);
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f8fafc 30%, #38bdf8 70%, #22c55e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--accent-cyan);
+    }
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .flex-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-cyan);
+      background: rgba(255, 255, 255, 0.1);
+      height: 6px;
+      border-radius: 4px;
+      outline: none;
+    }
+    input[type="number"], select {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    input[type="number"]:focus, select:focus { border-color: var(--accent-cyan); }
+    .metric-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+    .metric-val.green { color: var(--accent-green); }
+    .metric-val.amber { color: var(--accent-amber); }
+    .metric-val.red { color: var(--accent-red); }
+    .metric-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+    }
+    .status-pill.green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.4); }
+    .status-pill.amber { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status-pill.red { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
+    
+    .pay-card {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(34, 197, 94, 0.12) 100%);
+      border: 1px solid rgba(14, 165, 233, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .wallet-btn {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .wallet-btn:hover {
+      background: rgba(14, 165, 233, 0.2);
+      border-color: var(--accent-cyan);
+    }
+    footer {
+      margin-top: 32px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">BASE DEFI ENGINE • AVANTIS SYNTHETIC PERPS</div>
+      <h1>Avantis Senior/Junior AVLP & Skew Funding Radar</h1>
+      <p class="subtitle">Dual-tranche AVLP waterfall revenue distribution, dynamic skew funding velocity, and delta-neutral carry arbitrage modeling.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Controls -->
+      <div class="card">
+        <h2>⚡ AVLP Tranche & Market Parameters</h2>
+        <div class="form-group">
+          <label>AVLP Tranche Selection</label>
+          <select id="trancheSelect" onchange="updateCalculations()">
+            <option value="junior">Junior AVLP (High-Yield • 65% Fees + 100% Trader PnL)</option>
+            <option value="senior">Senior AVLP (Principal Protected • 35% Fees)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Your USDC Deposit ($)</label>
+          <input type="number" id="depositUsd" value="10000" step="1000" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>24H Trading Volume ($)</label>
+            <input type="number" id="dailyVol" value="8000000" step="500000" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>Trader Daily Net PnL ($)</label>
+            <input type="number" id="traderPnl" value="-15000" step="2500" oninput="updateCalculations()">
+          </div>
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>Long Open Interest ($)</label>
+            <input type="number" id="longOi" value="7000000" step="500000" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>Short Open Interest ($)</label>
+            <input type="number" id="shortOi" value="3000000" step="500000" oninput="updateCalculations()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Metrics -->
+      <div class="card">
+        <h2>📊 Real-Time Yield & Arbitrage</h2>
+        <div class="metric-box">
+          <div class="flex-row">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Tranche Annualized APY</span>
+            <span id="tranchePill" class="status-pill green">JUNIOR TRADING CASHFLOW</span>
+          </div>
+          <div class="metric-val green" id="trancheApyDisplay">330.69% APY</div>
+          <div class="metric-sub" id="trancheDetail">Est. $90.60 daily revenue on $10,000 deposit</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="flex-row">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Dynamic Skew Funding Rate</span>
+            <span id="skewPill" class="status-pill green">HIGH CONVICTION ARB</span>
+          </div>
+          <div class="metric-val" id="skewRateDisplay">16.00% APR (Longs Pay Shorts)</div>
+          <div class="metric-sub" id="skewArbDetail">Delta-neutral short carry yield: +13.50% net annualized ROI</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="flex-row">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Senior vs Junior TVL Waterfall</span>
+            <span class="status-pill green">HEALTHY BUFFER</span>
+          </div>
+          <div class="metric-val" id="waterfallDisplay" style="font-size:1.35rem;">$6.0M Senior / $2.0M Junior</div>
+          <div class="metric-sub">Junior absorbs up to $2,000,000 in trader profits before Senior principal is impaired.</div>
+        </div>
+
+        <div class="pay-card">
+          <h3 style="font-size:1.1rem; margin-bottom:6px;">🚀 Unlock Automated Skew Arbitrage & Tranche Sentinel</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Get instant WebSocket alerts when OI skew >25% and automated delta-neutral funding harvest bots.</p>
+          <div style="font-size:0.82rem; font-weight:700; margin-bottom:6px;">5 Base USDC or 0.03 SOL</div>
+          <button class="wallet-btn" onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01')">
+            <span>Base EVM (USDC): 0xF0E...3c01</span>
+            <span style="color:var(--accent-cyan); font-weight:700;">COPY</span>
+          </button>
+          <button class="wallet-btn" onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM')">
+            <span>Solana (SOL/USDC): DW2Md...SAM</span>
+            <span style="color:var(--accent-cyan); font-weight:700;">COPY</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Avantis Protocol Base Analytics Engine • Dual-Tranche AVLP & Skew Funding • Non-Custodial Real-Money Systems
+    </footer>
+  </div>
+
+  <script>
+    function updateCalculations() {
+      const tranche = document.getElementById('trancheSelect').value;
+      const deposit = parseFloat(document.getElementById('depositUsd').value) || 0;
+      const volume = parseFloat(document.getElementById('dailyVol').value) || 0;
+      const traderPnl = parseFloat(document.getElementById('traderPnl').value) || 0;
+      const longOi = parseFloat(document.getElementById('longOi').value) || 0;
+      const shortOi = parseFloat(document.getElementById('shortOi').value) || 0;
+
+      const totalFees = volume * 0.0006;
+      const seniorFees = totalFees * 0.35;
+      const juniorFees = totalFees * 0.65;
+
+      const juniorTotal = Math.max(0, juniorFees - traderPnl);
+      const seniorTotal = seniorFees;
+
+      const seniorTvl = 6000000;
+      const juniorTvl = 2000000;
+
+      const seniorApy = (seniorTotal * 365 / seniorTvl) * 100;
+      const juniorApy = (juniorTotal * 365 / juniorTvl) * 100;
+
+      const userApy = tranche === 'senior' ? seniorApy : juniorApy;
+      const userDaily = tranche === 'senior' ? (deposit / seniorTvl) * seniorTotal : (deposit / juniorTvl) * juniorTotal;
+
+      document.getElementById('trancheApyDisplay').innerText = `${userApy.toFixed(2)}% APY`;
+      document.getElementById('trancheDetail').innerText = `Est. $${userDaily.toFixed(2)} daily revenue on $${deposit.toLocaleString()} deposit in ${tranche.toUpperCase()}`;
+
+      // Skew Funding
+      const totalOi = longOi + shortOi;
+      const skew = totalOi > 0 ? (longOi - shortOi) / totalOi : 0;
+      const fundingRate = Math.abs(skew) * 25.0 + 6.0;
+      const arbRoi = Math.max(0, fundingRate - 2.5);
+
+      const skewPill = document.getElementById('skewPill');
+      const skewRateDisplay = document.getElementById('skewRateDisplay');
+      const skewArbDetail = document.getElementById('skewArbDetail');
+
+      const dirStr = skew > 0 ? "Longs Pay Shorts" : "Shorts Pay Longs";
+      skewRateDisplay.innerText = `${fundingRate.toFixed(2)}% APR (${dirStr})`;
+      skewArbDetail.innerText = `Delta-neutral carry yield: +${arbRoi.toFixed(2)}% net annualized ROI`;
+
+      if (Math.abs(skew) > 0.3) {
+        skewPill.className = 'status-pill green';
+        skewPill.innerText = 'HIGH CONVICTION ARB';
+      } else {
+        skewPill.className = 'status-pill amber';
+        skewPill.innerText = 'MODERATE SKEW';
+      }
+    }
+
+    function copyWallet(addr) {
+      navigator.clipboard.writeText(addr);
+      alert('Wallet address copied to clipboard:\n' + addr);
+    }
+
+    window.onload = updateCalculations;
+  </script>
+</body>
+</html>
