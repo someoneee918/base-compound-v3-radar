@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Curvance Modular Money Market Radar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #030712; color: #f9fafb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.4); }
+    .accent-gradient { background: linear-gradient(135deg, #0052FF 0%, #8B5CF6 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+  <div class="max-w-6xl mx-auto w-full space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-5 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-900/60 text-blue-400 border border-blue-700">BASE L2</span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-purple-900/60 text-purple-400 border border-purple-700">CURVANCE MODULAR</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">Curvance Modular Money Market & Carry Radar</h1>
+        <p class="text-sm text-gray-400">Yield-bearing collateral looping carry APY, Dutch auction liquidation discount decay, and isolated risk containment.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs text-gray-400">Network / Protocol</div>
+          <div class="text-sm font-bold text-white flex items-center justify-end gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Base Mainnet (8453)</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Key Metrics Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Net Leveraged Carry</div>
+        <div id="statCarryApy" class="text-2xl font-black text-emerald-400 mt-1">18.50%</div>
+        <div class="text-xs text-gray-500 mt-0.5">3.0x looping leverage</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Daily Cashflow</div>
+        <div id="statDailyIncome" class="text-2xl font-black text-blue-400 mt-1">$5.07/day</div>
+        <div class="text-xs text-gray-500 mt-0.5">On $10,000 deposit</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Account Health Factor</div>
+        <div id="statHealthFactor" class="text-2xl font-black text-cyan-400 mt-1">1.275</div>
+        <div class="text-xs text-gray-500 mt-0.5">21.57% buffer before liq</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Dutch Auction Profit</div>
+        <div id="statAuctionProfit" class="text-2xl font-black text-purple-400 mt-1">$299.96</div>
+        <div class="text-xs text-gray-500 mt-0.5">6.0% discount at 900s</div>
+      </div>
+    </div>
+
+    <!-- Simulator Inputs & Output Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Input Controls -->
+      <div class="glass-card p-5 rounded-xl space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-purple-400"></i> Vault & Strategy Controls
+        </h3>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Deposit Capital (USD)</span>
+            <span id="labelDeposit" class="font-bold text-white">$10,000</span>
+          </div>
+          <input type="range" id="inputDeposit" min="1000" max="100000" step="1000" value="10000" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Target Looping Leverage</span>
+            <span id="labelLeverage" class="font-bold text-cyan-400">3.0x</span>
+          </div>
+          <input type="range" id="inputLeverage" min="1.0" max="5.0" step="0.1" value="3.0" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-400">Collateral Yield (%)</label>
+            <input type="number" id="inputCollateralYield" value="8.5" step="0.5" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400">Borrow APR (%)</label>
+            <input type="number" id="inputBorrowRate" value="3.5" step="0.5" class="w-full bg-gray-800 border border-gray-700 rounded p-1.5 text-sm font-semibold text-white mt-1">
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between text-xs text-gray-300 mb-1">
+            <span>Dutch Auction Elapsed (sec)</span>
+            <span id="labelElapsed" class="font-bold text-purple-400">900 sec (50%)</span>
+          </div>
+          <input type="range" id="inputElapsed" min="0" max="1800" step="60" value="900" class="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <button onclick="recalculate()" class="w-full py-2 px-4 rounded-lg bg-purple-600 hover:bg-purple-500 font-semibold text-sm transition">
+          Recalculate Radar
+        </button>
+      </div>
+
+      <!-- Strategy Ledger & Breakdown -->
+      <div class="glass-card p-5 rounded-xl space-y-4 lg:col-span-2">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-300 flex items-center gap-2">
+          <i class="fa-solid fa-chart-pie text-cyan-400"></i> Balance Sheet & Auction Economics
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">Leveraged Looping Ledger</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Total Supplied Asset</span>
+              <span id="cellSupplied" class="font-bold text-white">$30,000.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Total Borrowed Debt</span>
+              <span id="cellDebt" class="font-bold text-rose-400">$20,000.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Gross Supply Earnings</span>
+              <span id="cellGrossSupply" class="font-bold text-emerald-400">+$2,550.00/yr</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Borrow Interest Cost</span>
+              <span id="cellBorrowCost" class="font-bold text-rose-400">-$700.00/yr</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Opportunity Status</span>
+              <span id="badgeTier" class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600">PRIME CARRY LOOP</span>
+            </div>
+          </div>
+
+          <div class="bg-gray-800/60 p-3.5 rounded-lg border border-gray-700/50 space-y-2">
+            <div class="text-xs font-semibold text-gray-400 uppercase">Dutch Auction Liquidation Economics</div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Current Auction Discount</span>
+              <span id="cellDiscount" class="font-bold text-purple-400">6.00%</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Repaid Debt Chunk ($5k)</span>
+              <span class="font-bold text-white">$5,000.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Seized Collateral Value</span>
+              <span id="cellSeized" class="font-bold text-emerald-400">$5,300.00</span>
+            </div>
+            <div class="flex justify-between text-sm py-1 border-b border-gray-700">
+              <span class="text-gray-400">Base L2 Gas Execution</span>
+              <span class="font-bold text-rose-400">-$0.04</span>
+            </div>
+            <div class="flex justify-between text-sm py-1">
+              <span class="text-gray-400">Net Liquidator Profit</span>
+              <span id="cellNetProfit" class="font-bold text-emerald-400">+$299.96 net</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP License Commercial Module -->
+    <div class="glass-card p-6 rounded-xl border border-purple-500/30">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <span class="px-2.5 py-0.5 text-xs font-bold uppercase rounded-full bg-purple-900/80 text-purple-300 border border-purple-600">COMMERCIAL VIP ACCESS</span>
+          <h2 class="text-xl font-black text-white mt-1">Unlock Automated Curvance Sentinel & Dutch Auction Sniper</h2>
+          <p class="text-sm text-gray-400">Sub-second webhook alerts when vault collateral health drops below 1.05, automated Dutch auction liquidation decay triggers, and isolated carry optimizers.</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01', 'Base')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-brands fa-ethereum"></i> Pay 5 Base USDC
+          </button>
+          <button onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM', 'Solana')" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-bolt"></i> Pay 0.03 SOL
+          </button>
+        </div>
+      </div>
+      <div id="copyNotice" class="hidden mt-3 p-2 text-xs bg-emerald-950/80 border border-emerald-700 text-emerald-300 rounded"></div>
+    </div>
+  </div>
+
+  <footer class="mt-8 border-t border-gray-800 pt-4 text-center text-xs text-gray-500">
+    <p>Curvance Modular Money Market Radar &copy; 2026. Non-custodial analytics on Base L2.</p>
+  </footer>
+
+  <script>
+    function recalculate() {
+      const deposit = parseFloat(document.getElementById('inputDeposit').value);
+      const leverage = parseFloat(document.getElementById('inputLeverage').value);
+      const yieldApy = parseFloat(document.getElementById('inputCollateralYield').value);
+      const borrowApy = parseFloat(document.getElementById('inputBorrowRate').value);
+      const elapsed = parseFloat(document.getElementById('inputElapsed').value);
+
+      document.getElementById('labelDeposit').innerText = '$' + deposit.toLocaleString();
+      document.getElementById('labelLeverage').innerText = leverage.toFixed(1) + 'x';
+      document.getElementById('labelElapsed').innerText = elapsed + ' sec (' + ((elapsed / 1800.0) * 100).toFixed(0) + '%)';
+
+      const supplied = deposit * leverage;
+      const debt = deposit * (leverage - 1.0);
+      const grossSupply = supplied * (yieldApy / 100.0);
+      const borrowCost = debt * (borrowApy / 100.0);
+      const netProfit = grossSupply - borrowCost;
+      const netApy = (netProfit / deposit) * 100.0;
+      const dailyCashflow = netProfit / 365.0;
+
+      const effectiveCollateral = supplied * 0.85;
+      const hf = debt > 0 ? (effectiveCollateral / debt) : 999.0;
+      const maxDrawdown = debt > 0 ? Math.max(0, (1 - (debt / effectiveCollateral)) * 100.0) : 100.0;
+
+      const progress = Math.min(1.0, elapsed / 1800.0);
+      const discount = 10.0 - (progress * (10.0 - 2.0));
+      const seized = 5000.0 * (1.0 + (discount / 100.0));
+      const grossAuctionProfit = seized - 5000.0;
+      const netAuctionProfit = Math.max(0, grossAuctionProfit - 0.04);
+
+      document.getElementById('statCarryApy').innerText = netApy.toFixed(2) + '%';
+      document.getElementById('statDailyIncome').innerText = '$' + dailyCashflow.toFixed(2) + '/day';
+      document.getElementById('statHealthFactor').innerText = hf.toFixed(3);
+      document.getElementById('statAuctionProfit').innerText = '$' + netAuctionProfit.toFixed(2);
+
+      document.getElementById('cellSupplied').innerText = '$' + supplied.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('cellDebt').innerText = '$' + debt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('cellGrossSupply').innerText = '+$' + grossSupply.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '/yr';
+      document.getElementById('cellBorrowCost').innerText = '-$' + borrowCost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '/yr';
+
+      document.getElementById('cellDiscount').innerText = discount.toFixed(2) + '%';
+      document.getElementById('cellSeized').innerText = '$' + seized.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('cellNetProfit').innerText = '+$' + netAuctionProfit.toFixed(2) + ' net';
+
+      const badge = document.getElementById('badgeTier');
+      if (netApy >= 15.0 && hf >= 1.15) {
+        badge.innerText = 'PRIME CARRY LOOP';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-emerald-900/60 text-emerald-300 border border-emerald-600';
+      } else {
+        badge.innerText = 'STANDARD MONITOR';
+        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-purple-900/60 text-purple-300 border border-purple-600';
+      }
+    }
+
+    document.getElementById('inputDeposit').addEventListener('input', recalculate);
+    document.getElementById('inputLeverage').addEventListener('input', recalculate);
+    document.getElementById('inputCollateralYield').addEventListener('input', recalculate);
+    document.getElementById('inputBorrowRate').addEventListener('input', recalculate);
+    document.getElementById('inputElapsed').addEventListener('input', recalculate);
+
+    function copyWallet(address, network) {
+      navigator.clipboard.writeText(address);
+      const notice = document.getElementById('copyNotice');
+      notice.innerHTML = '<strong>' + network + ' Address Copied:</strong> ' + address + ' (Send payment and message @SolGuardScanBot with tx hash for instant VIP API key activation)';
+      notice.classList.remove('hidden');
+      setTimeout(() => notice.classList.add('hidden'), 8000);
+    }
+
+    recalculate();
+  </script>
+</body>
+</html>
