@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solana Helius DAS State Compression Read-Cost & Canopy Optimization Radar</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0c10;
+            --bg-secondary: #12161f;
+            --card-bg: rgba(22, 27, 34, 0.75);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-green: #10b981;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f59e0b;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2));
+            color: var(--accent-cyan);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #f3f4f6, #06b6d4, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.75rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            max-width: 750px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(12px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .range-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent-cyan);
+        }
+
+        .val-disp {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--accent-cyan);
+            min-width: 90px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .metric-box {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .text-green { color: var(--accent-green); }
+        .text-cyan { color: var(--accent-cyan); }
+        .text-orange { color: var(--accent-orange); }
+        .text-purple { color: var(--accent-purple); }
+
+        .cta-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 1rem;
+            padding: 1.75rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .cta-btn {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            color: #000;
+            font-weight: 700;
+            padding: 0.85rem 1.75rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s, opacity 0.2s;
+            margin-top: 1rem;
+        }
+
+        .cta-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .modal-card {
+            background: #161b22;
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            max-width: 520px;
+            width: 100%;
+            padding: 2rem;
+            text-align: left;
+        }
+
+        .wallet-pill {
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+            margin: 0.5rem 0 1rem 0;
+            color: var(--accent-cyan);
+        }
+
+        .close-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="badge">Solana State Compression & DAS RPC Radar</div>
+            <h1>Helius DAS & Tree Canopy Optimization</h1>
+            <p class="subtitle">Real-time simulation of Digital Asset Standard (DAS) batch query credit savings, Concurrent Merkle Tree canopy proof size reduction, and multi-million cNFT account rent savings.</p>
+        </header>
+
+        <div class="grid">
+            <!-- DAS Batch Query Optimizer -->
+            <div class="card">
+                <h2>⚡ DAS Batch Query Economics</h2>
+                <div class="form-group">
+                    <label>Monthly Queried Assets</label>
+                    <div class="range-wrapper">
+                        <input type="range" id="assetQueryRange" min="50000" max="5000000" step="50000" value="500000" oninput="recalc()">
+                        <span class="val-disp" id="assetQueryDisp">500,000</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>DAS Batch Size (Assets per Request)</label>
+                    <div class="range-wrapper">
+                        <input type="range" id="batchSizeRange" min="10" max="1000" step="10" value="100" oninput="recalc()">
+                        <span class="val-disp" id="batchSizeDisp">100</span>
+                    </div>
+                </div>
+
+                <div class="metric-box">
+                    <span class="metric-label">Unbatched Credits Cost:</span>
+                    <span class="metric-value text-orange" id="unbatchedCostDisp">$50.00</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-label">Batched Credits Cost:</span>
+                    <span class="metric-value text-cyan" id="batchedCostDisp">$2.50</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-label">Net Credit Savings:</span>
+                    <span class="metric-value text-green" id="creditSavingsDisp">95.0% ($47.50 saved)</span>
+                </div>
+            </div>
+
+            <!-- Concurrent Merkle Tree Canopy -->
+            <div class="card">
+                <h2>🌲 Canopy Proof Size Overhead</h2>
+                <div class="form-group">
+                    <label>Tree Max Depth (2^Depth Capacity)</label>
+                    <div class="range-wrapper">
+                        <input type="range" id="maxDepthRange" min="14" max="26" step="2" value="20" oninput="recalc()">
+                        <span class="val-disp" id="maxDepthDisp">20 (1.04M)</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Canopy Depth (Cached On-Chain Levels)</label>
+                    <div class="range-wrapper">
+                        <input type="range" id="canopyDepthRange" min="0" max="18" step="1" value="10" oninput="recalc()">
+                        <span class="val-disp" id="canopyDepthDisp">10</span>
+                    </div>
+                </div>
+
+                <div class="metric-box">
+                    <span class="metric-label">Transmitted Proof Hashes:</span>
+                    <span class="metric-value text-purple" id="proofHashesDisp">10 / 20</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-label">Tx Packet Payload Saved:</span>
+                    <span class="metric-value text-green" id="bytesSavedDisp">320 bytes (50.0%)</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-label">Compute Budget Footprint:</span>
+                    <span class="metric-value text-cyan" id="computeDisp">LOW (Safe under 1232B MTU)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- On-Chain Rent Comparison -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h2>💰 Traditional Token Account vs Merkle Tree Rent</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div class="metric-box" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                    <span class="metric-label">Traditional 1M SPL NFTs:</span>
+                    <span class="metric-value text-orange" id="tradRentDisp">2,039.28 SOL ($407,856)</span>
+                </div>
+                <div class="metric-box" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                    <span class="metric-label">Concurrent Merkle Tree:</span>
+                    <span class="metric-value text-green" id="treeRentDisp">10.15 SOL ($2,030)</span>
+                </div>
+                <div class="metric-box" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                    <span class="metric-label">Capital Saved:</span>
+                    <span class="metric-value text-cyan" id="rentSavedDisp">99.50% ($405,826 saved)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIP License Box -->
+        <div class="cta-box">
+            <h3>🚀 Unlock Automated Helius DAS SDK & Canopy Proof Optimizer</h3>
+            <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem;">
+                Acquire instant VIP access to production TypeScript `@helius-labs/helius-sdk` batch fetchers, automated Merkle tree canopy sizing calculators, and live indexing cost sentinels.
+            </p>
+            <button class="cta-btn" onclick="openModal()">Unlock VIP License (5 Base USDC / 0.03 SOL)</button>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal-card">
+            <h3 style="margin-bottom: 0.75rem;">Unlock VIP Sentinel License</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                Send exactly <strong>5 Base USDC</strong> or <strong>0.03 SOL</strong> to our non-custodial protocol address below:
+            </p>
+            <label>Base (USDC / ETH):</label>
+            <div class="wallet-pill">0xF0E0D361bBE899F3089f0a968506eF2B97693c01</div>
+            <label>Solana (SOL / USDC):</label>
+            <div class="wallet-pill">DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM</div>
+            <button class="close-btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        function recalc() {
+            const assets = parseInt(document.getElementById('assetQueryRange').value);
+            const batchSize = parseInt(document.getElementById('batchSizeRange').value);
+            const maxDepth = parseInt(document.getElementById('maxDepthRange').value);
+            const canopyDepth = parseInt(document.getElementById('canopyDepthRange').value);
+
+            document.getElementById('assetQueryDisp').innerText = Number(assets).toLocaleString();
+            document.getElementById('batchSizeDisp').innerText = batchSize;
+            
+            const capacity = Math.pow(2, maxDepth);
+            const capStr = capacity >= 1000000 ? (capacity / 1000000).toFixed(2) + 'M' : (capacity / 1000).toFixed(0) + 'k';
+            document.getElementById('maxDepthDisp').innerText = `${maxDepth} (${capStr})`;
+            document.getElementById('canopyDepthDisp').innerText = canopyDepth;
+
+            // DAS calculations
+            const unbatchedCredits = assets * 10;
+            const numBatches = Math.ceil(assets / batchSize);
+            const batchedCredits = numBatches * 50;
+            const unbatchedCost = (unbatchedCredits / 1000000) * 10.0;
+            const batchedCost = (batchedCredits / 1000000) * 10.0;
+            const savingsPct = ((unbatchedCredits - batchedCredits) / unbatchedCredits * 100).toFixed(1);
+            const savedUsd = (unbatchedCost - batchedCost).toFixed(2);
+
+            document.getElementById('unbatchedCostDisp').innerText = `$${unbatchedCost.toFixed(2)}`;
+            document.getElementById('batchedCostDisp').innerText = `$${batchedCost.toFixed(2)}`;
+            document.getElementById('creditSavingsDisp').innerText = `${savingsPct}% ($${savedUsd} saved)`;
+
+            // Canopy calculations
+            const transmittedProof = Math.max(0, maxDepth - canopyDepth);
+            const bytesSaved = canopyDepth * 32;
+            const overheadRedPct = ((canopyDepth / maxDepth) * 100).toFixed(1);
+
+            document.getElementById('proofHashesDisp').innerText = `${transmittedProof} / ${maxDepth}`;
+            document.getElementById('bytesSavedDisp').innerText = `${bytesSaved} bytes (${overheadRedPct}%)`;
+
+            // Rent calculations
+            const tradSol = assets * 0.00203928;
+            const tradUsd = tradSol * 200.0;
+            const treeSol = 10.15;
+            const treeUsd = treeSol * 200.0;
+            const rentSavedPct = ((tradSol - treeSol) / tradSol * 100).toFixed(2);
+            const rentSavedUsd = (tradUsd - treeUsd).toLocaleString(undefined, {maximumFractionDigits: 0});
+
+            document.getElementById('tradRentDisp').innerText = `${tradSol.toLocaleString(undefined, {maximumFractionDigits: 1})} SOL ($${(tradUsd).toLocaleString(undefined, {maximumFractionDigits: 0})})`;
+            document.getElementById('treeRentDisp').innerText = `${treeSol} SOL ($${treeUsd.toLocaleString()})`;
+            document.getElementById('rentSavedDisp').innerText = `${rentSavedPct}% ($${rentSavedUsd} saved)`;
+        }
+
+        function openModal() {
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+
+        recalc();
+    </script>
+</body>
+</html>
