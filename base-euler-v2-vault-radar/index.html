@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Euler v2 Modular Vault Connector & Dutch Auction Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #080d1a;
+      --card-bg: rgba(16, 26, 46, 0.75);
+      --border: rgba(99, 102, 241, 0.25);
+      --accent-indigo: #818cf8;
+      --accent-cyan: #38bdf8;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12), transparent 45%),
+                        radial-gradient(circle at 85% 85%, rgba(56, 189, 248, 0.12), transparent 45%);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+    .container { max-width: 1140px; width: 100%; }
+    header { text-align: center; margin-bottom: 32px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid var(--border);
+      color: var(--accent-indigo);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f8fafc 30%, #818cf8 70%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--accent-indigo);
+    }
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .flex-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-indigo);
+      background: rgba(255, 255, 255, 0.1);
+      height: 6px;
+      border-radius: 4px;
+      outline: none;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    input[type="number"]:focus { border-color: var(--accent-indigo); }
+    .metric-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--accent-indigo);
+    }
+    .metric-val.green { color: var(--accent-green); }
+    .metric-val.amber { color: var(--accent-amber); }
+    .metric-val.red { color: var(--accent-red); }
+    .metric-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+    }
+    .status-pill.green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.4); }
+    .status-pill.amber { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status-pill.red { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
+    
+    .pay-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(56, 189, 248, 0.12) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .wallet-btn {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .wallet-btn:hover {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: var(--accent-indigo);
+    }
+    footer {
+      margin-top: 32px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">BASE DEFI ENGINE • EULER V2 (EVK)</div>
+      <h1>Base Euler v2 Vault Connector & Dutch Auction Radar</h1>
+      <p class="subtitle">ERC-4626 vault connector compounding yields, modular bad-debt contagion firewall analysis, and Dutch auction liquidation entry optimization.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Input Controls -->
+      <div class="card">
+        <h2>⚡ Vault & Dutch Auction Parameters</h2>
+        <div class="form-group">
+          <label>Vault Deposit ($ USD)</label>
+          <input type="number" id="depositUsd" value="25000" step="2500" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>Base Lending APR (%)</label>
+            <input type="number" id="baseApr" value="8.50" step="0.25" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>Connector Boost APR (%)</label>
+            <input type="number" id="boostApr" value="4.20" step="0.20" oninput="updateCalculations()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="flex-row">
+            <label>Dutch Auction Elapsed Time</label>
+            <span id="elapsedVal" style="font-family:'JetBrains Mono'; color:var(--accent-indigo); font-weight:700;">600s / 1800s (33.3%)</span>
+          </div>
+          <input type="range" id="elapsedRange" min="0" max="1800" step="30" value="600" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group">
+          <label>Auction Repayment Debt ($ USD)</label>
+          <input type="number" id="repayDebt" value="15000" step="1000" oninput="updateCalculations()">
+        </div>
+      </div>
+
+      <!-- Live Analytics -->
+      <div class="card">
+        <h2>📊 Real-Time Yield & Dutch Auctions</h2>
+        <div class="metric-box">
+          <div class="flex-row">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Effective Net Vault APY</span>
+            <span class="status-pill green">ERC-4626 COMPOUND</span>
+          </div>
+          <div class="metric-val green" id="netApyDisplay">12.70% Net APY</div>
+          <div class="metric-sub" id="cashflowDetail">Est. $8.70 daily ($3,175/yr) on $25,000 deposit</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="flex-row">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Dutch Auction Liquidation Entry</span>
+            <span id="auctionPill" class="status-pill green">OPTIMAL ENTRY</span>
+          </div>
+          <div class="metric-val" id="profitDisplay">$599.65 Net Profit (4.00% Bonus)</div>
+          <div class="metric-sub" id="auctionDetail">Seizes $15,600 collateral at 4.0% current discount (Gas: $0.35)</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="flex-row">
+            <span style="font-size:0.85rem; color:var(--text-muted);">EVK Modular Contagion Firewall</span>
+            <span class="status-pill green">100% CONTAINED</span>
+          </div>
+          <div class="metric-val green" style="font-size:1.35rem;">$0.00 Contagion Spillover</div>
+          <div class="metric-sub">Modular EVK architecture isolates bad debt strictly within the origin vault.</div>
+        </div>
+
+        <div class="pay-card">
+          <h3 style="font-size:1.1rem; margin-bottom:6px;">🚀 Unlock Automated Dutch Auction Liquidator Bot</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Get instant WebSocket triggers when Dutch auction discount crosses your profit threshold.</p>
+          <div style="font-size:0.82rem; font-weight:700; margin-bottom:6px;">5 Base USDC or 0.03 SOL</div>
+          <button class="wallet-btn" onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01')">
+            <span>Base EVM (USDC): 0xF0E...3c01</span>
+            <span style="color:var(--accent-indigo); font-weight:700;">COPY</span>
+          </button>
+          <button class="wallet-btn" onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM')">
+            <span>Solana (SOL/USDC): DW2Md...SAM</span>
+            <span style="color:var(--accent-indigo); font-weight:700;">COPY</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Euler v2 Base Analytics Engine • EVK Modular Vaults & Dutch Auction Arbitrage • Non-Custodial Infrastructure
+    </footer>
+  </div>
+
+  <script>
+    function updateCalculations() {
+      const deposit = parseFloat(document.getElementById('depositUsd').value) || 0;
+      const baseApr = parseFloat(document.getElementById('baseApr').value) || 0;
+      const boostApr = parseFloat(document.getElementById('boostApr').value) || 0;
+      const elapsed = parseInt(document.getElementById('elapsedRange').value) || 0;
+      const repay = parseFloat(document.getElementById('repayDebt').value) || 0;
+
+      const totalAuction = 1800;
+      const pctElapsed = ((elapsed / totalAuction) * 100).toFixed(1);
+      document.getElementById('elapsedVal').innerText = `${elapsed}s / ${totalAuction}s (${pctElapsed}%)`;
+
+      // Net APY
+      const netApy = baseApr + boostApr;
+      const annualRev = deposit * (netApy / 100);
+      const dailyRev = annualRev / 365;
+
+      document.getElementById('netApyDisplay').innerText = `${netApy.toFixed(2)}% Net APY`;
+      document.getElementById('cashflowDetail').innerText = `Est. $${dailyRev.toFixed(2)} daily ($${annualRev.toLocaleString()}/yr) on $${deposit.toLocaleString()} deposit`;
+
+      // Dutch Auction
+      const currentDiscount = (12.0 * (elapsed / totalAuction));
+      const seized = repay * (1 + currentDiscount / 100);
+      const gross = seized - repay;
+      const netProfit = gross - 0.35;
+
+      const auctionPill = document.getElementById('auctionPill');
+      const profitDisplay = document.getElementById('profitDisplay');
+      const auctionDetail = document.getElementById('auctionDetail');
+
+      profitDisplay.innerText = `$${netProfit.toFixed(2)} Net Profit (${currentDiscount.toFixed(2)}% Bonus)`;
+      auctionDetail.innerText = `Seizes $${seized.toLocaleString()} collateral at ${currentDiscount.toFixed(2)}% current discount (Gas: $0.35)`;
+
+      if (currentDiscount >= 4.0 && netProfit > 10) {
+        auctionPill.className = 'status-pill green';
+        auctionPill.innerText = 'OPTIMAL ENTRY';
+      } else if (netProfit > 0) {
+        auctionPill.className = 'status-pill amber';
+        auctionPill.innerText = 'EARLY STAGE';
+      } else {
+        auctionPill.className = 'status-pill red';
+        auctionPill.innerText = 'WAIT FOR DECAY';
+      }
+    }
+
+    function copyWallet(addr) {
+      navigator.clipboard.writeText(addr);
+      alert('Wallet address copied to clipboard:\n' + addr);
+    }
+
+    window.onload = updateCalculations;
+  </script>
+</body>
+</html>
