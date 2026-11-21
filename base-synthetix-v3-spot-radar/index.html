@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Synthetix v3 Perps Liquidity & Spot Synth Arbitrage Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #080d1a;
+      --card-bg: rgba(16, 26, 46, 0.75);
+      --border: rgba(56, 189, 248, 0.25);
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.12), transparent 45%),
+                        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.12), transparent 45%);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+    .container { max-width: 1140px; width: 100%; }
+    header { text-align: center; margin-bottom: 32px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid var(--border);
+      color: var(--accent-cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #f8fafc 30%, #38bdf8 70%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--accent-cyan);
+    }
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    input[type="number"]:focus { border-color: var(--accent-cyan); }
+    .metric-box {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+    }
+    .metric-val.green { color: var(--accent-green); }
+    .metric-val.amber { color: var(--accent-amber); }
+    .metric-val.red { color: var(--accent-red); }
+    .metric-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+    }
+    .status-pill.green { background: rgba(34, 197, 94, 0.2); color: var(--accent-green); border: 1px solid rgba(34, 197, 94, 0.4); }
+    .status-pill.amber { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status-pill.red { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
+    
+    .pay-card {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .wallet-btn {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .wallet-btn:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent-cyan);
+    }
+    footer {
+      margin-top: 32px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">BASE DEFI ENGINE • SYNTHETIX V3 CORE</div>
+      <h1>Base Synthetix v3 Spot Synth & Perps Vault Radar</h1>
+      <p class="subtitle">Atomic spot synth oracle parity arbitrage, dynamic skew fee spreads, and Core LP Vault USDC collateral staking yields.</p>
+    </header>
+
+    <div class="grid">
+      <!-- Input Controls -->
+      <div class="card">
+        <h2>⚡ Spot Synth & Vault Parameters</h2>
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>Synthetix Oracle Price ($ USD)</label>
+            <input type="number" id="oraclePrice" value="3200" step="10" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>External DEX Price ($ USD)</label>
+            <input type="number" id="dexPrice" value="3215" step="1" oninput="updateCalculations()">
+          </div>
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>Arbitrage Trade Size ($ USD)</label>
+            <input type="number" id="tradeSize" value="20000" step="2500" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>Spot Market Skew ($ USD)</label>
+            <input type="number" id="skewVal" value="0" step="50000" oninput="updateCalculations()">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>USDC Staked in Core LP Vault ($ USD)</label>
+          <input type="number" id="colVault" value="50000" step="5000" oninput="updateCalculations()">
+        </div>
+
+        <div class="form-group" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>Vault Total Collateral ($ USD)</label>
+            <input type="number" id="vaultCol" value="100000" step="10000" oninput="updateCalculations()">
+          </div>
+          <div>
+            <label>Vault Debt ($ USD)</label>
+            <input type="number" id="vaultDebt" value="50000" step="5000" oninput="updateCalculations()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Metrics -->
+      <div class="card">
+        <h2>📊 Real-Time Arbitrage & Staking</h2>
+        <div class="metric-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Atomic Spot Synth Arbitrage</span>
+            <span id="arbPill" class="status-pill green">ATOMIC PROFIT</span>
+          </div>
+          <div class="metric-val green" id="arbProfitDisplay">+$73.40 Net Profit (0.37% ROI)</div>
+          <div class="metric-sub" id="arbDetail">Gross spread: $93.75 minus $20.35 total fees (DEX + SNX + Gas)</div>
+        </div>
+
+        <div class="metric-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Core LP Vault Staking Yield</span>
+            <span class="status-pill green">PERPS CASHFLOW</span>
+          </div>
+          <div class="metric-val" id="vaultApyDisplay">30.66% APY</div>
+          <div class="metric-sub" id="vaultCashflow">Est. $42.00 daily fee share on $50,000 USDC collateral</div>
+        </div>
+
+        <div class="metric-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; color:var(--text-muted);">Vault C-Ratio Health & Cushion</span>
+            <span id="cRatioPill" class="status-pill green">SAFE</span>
+          </div>
+          <div class="metric-val green" id="cRatioDisplay">200.0% C-Ratio</div>
+          <div class="metric-sub" id="cRatioCushion">Cushion: +$37,500 collateral before 125% liquidation threshold</div>
+        </div>
+
+        <div class="pay-card">
+          <h3 style="font-size:1.1rem; margin-bottom:6px;">🚀 Unlock Automated Synth Arbitrage & Vault Sentinel</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">Get instant WebSocket price deviation triggers and automated atomic execution contracts.</p>
+          <div style="font-size:0.82rem; font-weight:700; margin-bottom:6px;">5 Base USDC or 0.03 SOL</div>
+          <button class="wallet-btn" onclick="copyWallet('0xF0E0D361bBE899F3089f0a968506eF2B97693c01')">
+            <span>Base EVM (USDC): 0xF0E...3c01</span>
+            <span style="color:var(--accent-cyan); font-weight:700;">COPY</span>
+          </button>
+          <button class="wallet-btn" onclick="copyWallet('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM')">
+            <span>Solana (SOL/USDC): DW2Md...SAM</span>
+            <span style="color:var(--accent-cyan); font-weight:700;">COPY</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Synthetix v3 Base Analytics Engine • Spot Synth Arbitrage & Core LP Vault • Non-Custodial Infrastructure
+    </footer>
+  </div>
+
+  <script>
+    function updateCalculations() {
+      const oracle = parseFloat(document.getElementById('oraclePrice').value) || 1;
+      const dex = parseFloat(document.getElementById('dexPrice').value) || 1;
+      const size = parseFloat(document.getElementById('tradeSize').value) || 0;
+      const skew = parseFloat(document.getElementById('skewVal').value) || 0;
+      const colDeposit = parseFloat(document.getElementById('colVault').value) || 0;
+      const vaultCol = parseFloat(document.getElementById('vaultCol').value) || 0;
+      const vaultDebt = parseFloat(document.getElementById('vaultDebt').value) || 0;
+
+      // Arbitrage
+      const skewFee = skew / 10000000;
+      const effectiveSynthPrice = oracle * (1 + skewFee);
+      const spread = Math.abs(dex - effectiveSynthPrice);
+      const grossProfit = size * (spread / oracle);
+      const snxFee = size * 0.0005;
+      const dexFee = size * 0.0005;
+      const netProfit = grossProfit - snxFee - dexFee - 0.35;
+      const roi = size > 0 ? (netProfit / size) * 100 : 0;
+
+      const arbPill = document.getElementById('arbPill');
+      const arbProfitDisplay = document.getElementById('arbProfitDisplay');
+      const arbDetail = document.getElementById('arbDetail');
+
+      if (netProfit > 0) {
+        arbPill.className = 'status-pill green';
+        arbPill.innerText = 'ATOMIC PROFIT';
+        arbProfitDisplay.className = 'metric-val green';
+        arbProfitDisplay.innerText = `+$${netProfit.toFixed(2)} Net Profit (${roi.toFixed(2)}% ROI)`;
+      } else {
+        arbPill.className = 'status-pill red';
+        arbPill.innerText = 'UNPROFITABLE';
+        arbProfitDisplay.className = 'metric-val red';
+        arbProfitDisplay.innerText = `$${netProfit.toFixed(2)} Net (${roi.toFixed(2)}% ROI)`;
+      }
+      arbDetail.innerText = `Gross spread: $${grossProfit.toFixed(2)} minus $${(snxFee + dexFee + 0.35).toFixed(2)} total fees (DEX + SNX + Gas)`;
+
+      // Vault LP
+      const poolTvl = 25000000;
+      const dailyVolume = 40000000;
+      const totalDailyRev = (dailyVolume * 0.0004) + 5000;
+      const userShare = colDeposit / poolTvl;
+      const userDaily = totalDailyRev * userShare;
+      const apy = colDeposit > 0 ? (userDaily * 365 / colDeposit) * 100 : 0;
+
+      document.getElementById('vaultApyDisplay').innerText = `${apy.toFixed(2)}% APY`;
+      document.getElementById('vaultCashflow').innerText = `Est. $${userDaily.toFixed(2)} daily fee share on $${colDeposit.toLocaleString()} USDC collateral`;
+
+      // C-Ratio
+      const cRatio = vaultDebt > 0 ? (vaultCol / vaultDebt) * 100 : 999;
+      const minCol = vaultDebt * 1.25;
+      const cushion = vaultCol - minCol;
+
+      const cRatioPill = document.getElementById('cRatioPill');
+      const cRatioDisplay = document.getElementById('cRatioDisplay');
+      const cRatioCushion = document.getElementById('cRatioCushion');
+
+      cRatioDisplay.innerText = cRatio >= 999 ? '∞ (No Debt)' : `${cRatio.toFixed(1)}% C-Ratio`;
+      cRatioCushion.innerText = `Cushion: ${cushion >= 0 ? '+' : ''}$${cushion.toLocaleString()} collateral before 125% liquidation threshold`;
+
+      if (cRatio >= 150) {
+        cRatioPill.className = 'status-pill green';
+        cRatioPill.innerText = 'SAFE';
+        cRatioDisplay.className = 'metric-val green';
+      } else if (cRatio >= 125) {
+        cRatioPill.className = 'status-pill amber';
+        cRatioPill.innerText = 'WARNING';
+        cRatioDisplay.className = 'metric-val amber';
+      } else {
+        cRatioPill.className = 'status-pill red';
+        cRatioPill.innerText = 'LIQUIDATABLE';
+        cRatioDisplay.className = 'metric-val red';
+      }
+    }
+
+    function copyWallet(addr) {
+      navigator.clipboard.writeText(addr);
+      alert('Wallet address copied to clipboard:\n' + addr);
+    }
+
+    window.onload = updateCalculations;
+  </script>
+</body>
+</html>
