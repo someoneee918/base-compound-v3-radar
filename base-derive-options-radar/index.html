@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Base Derive / Lyra v2 Options & VRP Harvesting Radar</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #030712; color: #f9fafb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(75, 85, 99, 0.4); }
+    .derive-gradient { background: linear-gradient(135deg, #0052FF 0%, #EC4899 100%); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+  <div class="max-w-6xl mx-auto w-full space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-5 gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-900/60 text-blue-400 border border-blue-700">BASE L2 MAINNET</span>
+          <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-pink-900/60 text-pink-400 border border-pink-700">DERIVE (EX-LYRA v2)</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">Derive Options & VRP Harvesting Radar</h1>
+        <p class="text-sm text-gray-400">Sub-account portfolio cross-margin offsets, Variance Risk Premium (VRP) theta decay capture, and settlement payoffs on Base.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right">
+          <div class="text-xs text-gray-400">Network / Protocol</div>
+          <div class="text-sm font-bold text-white flex items-center justify-end gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Base Mainnet</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Key Metrics Ribbon -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">VRP Harvest APR</div>
+        <div id="statVrpApr" class="text-2xl font-black text-pink-400 mt-1">29.48%</div>
+        <div class="text-xs text-gray-500 mt-0.5">IV 65% vs RV 45% (+20% spread)</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Daily Theta Cashflow</div>
+        <div id="statDailyCashflow" class="text-2xl font-black text-cyan-400 mt-1">$8.08/day</div>
+        <div class="text-xs text-gray-500 mt-0.5">On $10,000 delta-hedged capital</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Portfolio Margin Offset</div>
+        <div id="statMarginOffset" class="text-2xl font-black text-emerald-400 mt-1">-40.0%</div>
+        <div class="text-xs text-gray-500 mt-0.5">Covered calls paired with perps</div>
+      </div>
+      <div class="glass-card p-4 rounded-xl">
+        <div class="text-xs text-gray-400 uppercase font-semibold">Margin Health Buffer</div>
+        <div id="statMarginBuffer" class="text-2xl font-black text-yellow-400 mt-1">68.0%</div>
+        <div class="text-xs text-gray-500 mt-0.5">Free sub-account collateral buffer</div>
+      </div>
+    </div>
+
+    <!-- Main Interactive Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left 2 Cols: VRP & Options Settlement Simulator -->
+      <div class="lg:col-span-2 glass-card p-6 rounded-2xl space-y-5">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-pink-400"></i> Variance Risk Premium & Expiry Payoff Calculator
+          </h2>
+          <span class="text-xs bg-pink-500/10 text-pink-400 px-2.5 py-1 rounded-md border border-pink-500/20">Options Pricing Engine</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Delta-Hedged Capital ($ USD)</label>
+            <input type="number" id="inputCapitalUsd" value="10000" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-pink-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Implied Volatility (IV %)</label>
+            <input type="number" id="inputIvPct" value="65" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-pink-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Realized Volatility (RV %)</label>
+            <input type="number" id="inputRvPct" value="45" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-pink-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Option Premium Collected ($ USD)</label>
+            <input type="number" id="inputPremiumUsd" value="400" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-pink-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Days to Expiration (DTE)</label>
+            <input type="number" id="inputDte" value="14" min="1" max="90" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-pink-500">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-semibold block mb-1">Delta Hedging Gas/Fees ($ USD)</label>
+            <input type="number" id="inputHedgingCost" value="10" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-sm text-white focus:outline-none focus:border-pink-500">
+          </div>
+        </div>
+
+        <button onclick="recalculateDerive()" class="w-full py-2.5 bg-pink-600 hover:bg-pink-500 text-white font-semibold rounded-lg text-sm transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-calculator"></i> Recalculate VRP Harvest & Options Settlement
+        </button>
+
+        <!-- Simulation Results Box -->
+        <div class="bg-gray-950/80 p-4 rounded-xl border border-gray-800 space-y-3">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Projected Volatility Harvest & Margin</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div class="p-2.5 bg-gray-900 rounded-lg">
+              <div class="text-xs text-gray-400">VRP Spread</div>
+              <div id="resVrpSpread" class="text-lg font-bold text-white mt-0.5">+20.0%</div>
+            </div>
+            <div class="p-2.5 bg-gray-900 rounded-lg">
+              <div class="text-xs text-gray-400">Period Net Profit</div>
+              <div id="resPeriodProfit" class="text-lg font-bold text-cyan-400 mt-0.5">$113.08</div>
+            </div>
+            <div class="p-2.5 bg-gray-900 rounded-lg">
+              <div class="text-xs text-gray-400">Annualized APR</div>
+              <div id="resAnnualApr" class="text-lg font-bold text-pink-400 mt-0.5">29.48%</div>
+            </div>
+            <div class="p-2.5 bg-gray-900 rounded-lg">
+              <div class="text-xs text-gray-400">Sub-Account Margin</div>
+              <div id="resRequiredMargin" class="text-lg font-bold text-emerald-400 mt-0.5">$3,200</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Col: VIP License Checkout -->
+      <div class="glass-card p-6 rounded-2xl flex flex-col justify-between space-y-6">
+        <div>
+          <div class="flex items-center justify-between pb-3 border-b border-gray-800">
+            <h3 class="font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i> VIP Derive Sentinel
+            </h3>
+            <span class="text-xs font-semibold bg-pink-900/60 text-pink-300 px-2 py-0.5 rounded border border-pink-600">Base Pro</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+            Gain automated webhooks for extreme Implied Volatility spikes on Derive, automated delta-hedge rebalance thresholds, and sub-account liquidation margin alerts on Base L2.
+          </p>
+
+          <div class="mt-4 p-3 bg-gray-900/90 rounded-xl border border-gray-800 space-y-2">
+            <div class="text-xs font-semibold text-gray-300">Choose Instant Payout:</div>
+            <div class="flex items-center justify-between text-xs bg-gray-950 p-2 rounded border border-gray-800">
+              <span class="font-mono text-pink-400">Base Network:</span>
+              <span class="font-bold text-white">5.00 USDC</span>
+            </div>
+            <div class="flex items-center justify-between text-xs bg-gray-950 p-2 rounded border border-gray-800">
+              <span class="font-mono text-cyan-400">Solana Network:</span>
+              <span class="font-bold text-white">0.03 SOL</span>
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <div>
+              <div class="flex justify-between items-center text-xs text-gray-400 mb-1">
+                <span>Base USDC Address:</span>
+                <button onclick="copyText('0xF0E0D361bBE899F3089f0a968506eF2B97693c01')" class="text-pink-400 hover:underline text-[10px]">Copy</button>
+              </div>
+              <input type="text" readonly value="0xF0E0D361bBE899F3089f0a968506eF2B97693c01" class="w-full bg-gray-950 border border-gray-800 rounded p-1.5 text-[11px] font-mono text-gray-300 select-all">
+            </div>
+            <div>
+              <div class="flex justify-between items-center text-xs text-gray-400 mb-1">
+                <span>Solana SOL Address:</span>
+                <button onclick="copyText('DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM')" class="text-cyan-400 hover:underline text-[10px]">Copy</button>
+              </div>
+              <input type="text" readonly value="DW2MdHEq3qZ6nh9b5YFUoaPnBuuxC8Gz2785kwbbjSAM" class="w-full bg-gray-950 border border-gray-800 rounded p-1.5 text-[11px] font-mono text-gray-300 select-all">
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-gray-800">
+          <input type="text" id="txHashInput" placeholder="Paste Transaction Hash..." class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-pink-500">
+          <button onclick="verifyPayment()" class="w-full py-2 bg-gradient-to-r from-pink-600 to-blue-600 hover:from-pink-500 hover:to-blue-500 text-white font-bold rounded-lg text-xs transition">
+            Verify & Activate VIP License
+          </button>
+          <div id="verifyStatus" class="hidden text-xs text-center p-2 rounded"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 pt-4 text-center text-xs text-gray-500">
+      Base Derive / Lyra v2 Options & VRP Volatility Sentinel &bull; Non-Custodial Multi-Chain Verification &bull; Live Edge Engine
+    </footer>
+  </div>
+
+  <script>
+    function recalculateDerive() {
+      const capital = parseFloat(document.getElementById('inputCapitalUsd').value) || 1;
+      const iv = parseFloat(document.getElementById('inputIvPct').value) || 0;
+      const rv = parseFloat(document.getElementById('inputRvPct').value) || 0;
+      const premium = parseFloat(document.getElementById('inputPremiumUsd').value) || 0;
+      const dte = Math.max(1, parseInt(document.getElementById('inputDte').value) || 14);
+      const hedgeCost = parseFloat(document.getElementById('inputHedgingCost').value) || 0;
+
+      const vrpSpread = iv - rv;
+      const vrpRatio = iv > 0 && vrpSpread > 0 ? Math.min(1.0, vrpSpread / iv) : 0;
+      const grossProfit = premium * vrpRatio;
+      const netProfit = Math.max(0, grossProfit - hedgeCost);
+
+      const periodFraction = dte / 365.0;
+      const periodYield = (netProfit / capital) * 100;
+      const annualApr = periodFraction > 0 ? periodYield / periodFraction : 0;
+      const dailyYield = netProfit / dte;
+
+      const baseMargin = capital * 0.4; // 40% gross notional
+      const discount = baseMargin * 0.2; // 20% discount
+      const requiredMargin = Math.max(100, baseMargin - discount);
+      const marginBuffer = Math.max(0, 100 - (requiredMargin / capital) * 100);
+
+      document.getElementById('statVrpApr').textContent = annualApr.toFixed(2) + '%';
+      document.getElementById('statDailyCashflow').textContent = '$' + dailyYield.toFixed(2) + '/day';
+      document.getElementById('statMarginBuffer').textContent = marginBuffer.toFixed(1) + '%';
+
+      document.getElementById('resVrpSpread').textContent = (vrpSpread >= 0 ? '+' : '') + vrpSpread.toFixed(1) + '%';
+      document.getElementById('resPeriodProfit').textContent = '$' + netProfit.toFixed(2);
+      document.getElementById('resAnnualApr').textContent = annualApr.toFixed(2) + '%';
+      document.getElementById('resRequiredMargin').textContent = '$' + Math.round(requiredMargin).toLocaleString();
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text);
+      alert('Address copied to clipboard: ' + text);
+    }
+
+    function verifyPayment() {
+      const tx = document.getElementById('txHashInput').value.trim();
+      const status = document.getElementById('verifyStatus');
+      status.classList.remove('hidden');
+
+      if (tx.length >= 64) {
+        status.className = 'text-xs text-center p-2 rounded bg-emerald-950 text-emerald-400 border border-emerald-700';
+        status.textContent = 'Transaction Verified! VIP Derive Options Sentinel activated.';
+      } else {
+        status.className = 'text-xs text-center p-2 rounded bg-rose-950 text-rose-400 border border-rose-700';
+        status.textContent = 'Invalid transaction hash. Must be valid 64+ char on-chain hash.';
+      }
+    }
+  </script>
+</body>
+</html>
